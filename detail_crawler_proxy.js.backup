@@ -437,8 +437,9 @@ async function crawlProductData() {
                     if (match && match[1]) {
                         try {
                             let jsonString = match[1].trim();
-                            // Trailing comma 제거 (JSON 파싱 강화)  
-                            jsonString = jsonString.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+                            if (jsonString.endsWith(',')) {
+                                jsonString = jsonString.slice(0, -1).trim();
+                            }
                             if (jsonString.startsWith('{') && jsonString.endsWith('}')) {
                                 const galleryData = JSON.parse(jsonString);
                                 if (galleryData.videos && Array.isArray(galleryData.videos)) {
@@ -453,54 +454,64 @@ async function crawlProductData() {
                                     if (productData.상품정보.동영상.length > 0) videosFound = true;
                                 }
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            console.log('[Video Parse Error]', e.message);
+                        }
                     }
                 } catch (e) {}
             }
 
-            if (imagesFound && videosFound) break;
-        }
-                    // Fallback 1: .mp4 URL 직접 검색 (videoGalleryData가 없을 때)
-        if (!videosFound) {
-            for (const script of scripts) {
-                if (!script.textContent) continue;
-                const mp4Regex = /https?:\\/\\/[^\\s"']+\\.mp4/g;
-                const mp4Urls = script.textContent.match(mp4Regex);
-                if (mp4Urls && mp4Urls.length > 0) {
-                    mp4Urls.forEach(url => {
-                        productData.상품정보.동영상.push({
-                            title: '',
-                            duration: '',
-                            thumbnail: '',
-                            url: url
-                        });
-                    });
-                    videosFound = true;
-                    break;
+            // Fallback: 직접 MP4 URL 검색 (videoGalleryData가 없는 경우)
+            if (!videosFound && (text.includes('.mp4') || text.includes('mediaType":"MP4"'))) {
+                try {
+                    const mp4Regex = new RegExp('"url":"(https?://[^"]+\\.mp4[^"]*)"', 'i');
+                    const match = text.match(mp4Regex);
+                    if (match && match[1]) {
+                        const isDuplicate = productData.상품정보.동영상.some(v => v.url === match[1]);
+                        if (!isDuplicate) {
+                            productData.상품정보.동영상.push({
+                                title: 'Product Video',
+                                duration: '',
+                                thumbnail: '', 
+                                url: match[1]
+                            });
+                            videosFound = true;
+                            console.log('   🎥 Fallback: MP4 URL 발견 ->', match[1].substring(0, 50) + '...');
+                        }
+                    }
+                } catch (e) {
+                    console.log('[Video Fallback Error]', e.message);
                 }
             }
+
+            if (imagesFound && videosFound) break;
         }
 
-        // Fallback 2: DOM <video> 태그 직접 검색
+        // Fallback 2: DOM에서 직접 <video> 태그 검색 (스크립트에도 없는 경우)
         if (!videosFound) {
             const videoElements = document.querySelectorAll('video');
             videoElements.forEach(video => {
-                let videoUrl = video.src;
-                if (!videoUrl) {
-                    const sourceEl = video.querySelector('source');
-                    if (sourceEl) videoUrl = sourceEl.src;
+                let src = video.src;
+                if (!src) {
+                    const source = video.querySelector('source');
+                    if (source) src = source.src;
                 }
-                if (videoUrl && !videoUrl.startsWith('blob:')) {
-                    productData.상품정보.동영상.push({
-                        title: '',
-                        duration: '',
-                        thumbnail: video.poster || '',
-                        url: videoUrl
-                    });
+
+                if (src && src.startsWith('http') && !src.includes('blob:')) {
+                     const isDuplicate = productData.상품정보.동영상.some(v => v.url === src);
+                     if (!isDuplicate) {
+                        productData.상품정보.동영상.push({
+                            title: 'DOM Video',
+                            duration: '',
+                            thumbnail: video.poster || '',
+                            url: src
+                        });
+                        videosFound = true;
+                        console.log('   🎥 Fallback 2: DOM Video 발견 ->', src.substring(0, 50) + '...');
+                     }
                 }
             });
         }
-
 
         if (imageUrls.size === 0) {
             const thumbnailList = document.querySelectorAll('#altImages img');
@@ -536,66 +547,6 @@ async function crawlProductData() {
             const titleEl = reviewEl.querySelector('[data-hook="review-title"]');
             const bodyEl = reviewEl.querySelector('[data-hook="review-body"] span');
             const ratingEl = reviewEl.querySelector('[data-hook="review-star-rating"] .a-icon-alt');
-
-            if (titleEl && bodyEl && ratingEl) {
-                let titleText = titleEl.textContent.trim();
-                titleText = titleText.replace(/^[0-5]\\.[0-9] out of 5 stars/i, '').trim();
-
-                const media_urls = [];
-                
-                // 리뷰 이미지 수집
-                const imageElements = reviewEl.querySelectorAll('[data-hook="review-image-tile"] img');
-                imageElements.forEach(img => {
-                    if (img.src) {
-                        let highResUrl = img.src.replace(/\\._.*_\\./g, '.');
-                        media_urls.push({ type: 'image', url: highResUrl });
-                    }
-                });
-
-                // 리뷰 비디오 URL 수집
-                const videoContainer = reviewEl.querySelector('.vse-video-container');
-                if (videoContainer) {
-                    const videoSource = videoContainer.querySelector('video source');
-                    if (videoSource && videoSource.src) {
-                        media_urls.push({ type: 'video', url: videoSource.src });
-                    } else {
-                        const videoElement = videoContainer.querySelector('video');
-                        if (videoElement && videoElement.src) {
-                            media_urls.push({ type: 'video', url: videoElement.src });
-                        } else {
-                            const videoUrl = videoContainer.getAttribute('data-video-url');
-                            if (videoUrl) {
-                                media_urls.push({ type: 'video', url: videoUrl });
-                            } else {
-                                const videoThumbnail = videoContainer.querySelector('img');
-                                if (videoThumbnail && videoThumbnail.src) {
-                                    let highResUrl = videoThumbnail.src.replace(/\\._.*_\\./g, '.');
-                                    media_urls.push({ type: 'video_thumbnail', url: highResUrl });
-                                }
-                            }
-                        }
-                    }
-                }
-
-                const reviewData = {
-                    title: titleText,
-                    text: bodyEl.textContent.trim(),
-                    rating: ratingEl.textContent.trim(),
-                    media_url: media_urls.length > 0 ? media_urls : null
-                };
-
-                if (media_urls.length > 0) {
-                    multimediaReviews.push(reviewData);
-                } else {
-                    textOnlyReviews.push(reviewData);
-                }
-            }
-        });
-
-        productData.상품정보.리뷰_텍스트 = [...multimediaReviews, ...textOnlyReviews].slice(0, 3);
-
-        return productData;
-
     } catch (error) {
         return { error: error.message };
     }
@@ -625,7 +576,7 @@ async function runDetailCrawler() {
         const sessionId = generateSessionId();
 
         if (USE_PROXY === 1) {
-            console.log(`   🔑 새 Proxy Session ID: ${sessionId}`);
+            console.log(`   🔑 새 Proxy Session ID: ${sessionId} `);
         } else {
             console.log(`   🔑 로컬 IP로 브라우저 시작 중...`);
         }
@@ -665,7 +616,7 @@ async function runDetailCrawler() {
         currentTask = await getNextTask();
 
         if (currentTask === null) {
-            console.log(`\n💤 대기 중: 처리할 작업이 없습니다. ${POLL_INTERVAL_MS / 1000}초 후 다시 확인합니다.`);
+            console.log(`\n💤 대기 중: 처리할 작업이 없습니다.${POLL_INTERVAL_MS / 1000}초 후 다시 확인합니다.`);
             await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
             continue;
         }
@@ -688,14 +639,14 @@ async function runDetailCrawler() {
                     const saveResult = await saveProductData(data, currentTask);
 
                     if (saveResult.saved) {
-                        console.log(`   ✅ 저장 성공 (직배송 O): ${data.상품정보.상품명.substring(0, 60)}...`);
+                        console.log(`   ✅ 저장 성공(직배송 O): ${data.상품정보.상품명.substring(0, 60)}...`);
 
                         const videoCount = data.상품정보.동영상 ? data.상품정보.동영상.length : 0;
                         const reviewCount = data.상품정보.리뷰_텍스트 ? data.상품정보.리뷰_텍스트.length : 0;
-                        const priceLog = data.상품정보.가격_USD !== null ? `$${data.상품정보.가격_USD}` : 'N/A';
-                        const shippingLog = data.상품정보.배송비_USD !== null ? `$${data.상품정보.배송비_USD}` : 'N/A';
+                        const priceLog = data.상품정보.가격_USD !== null ? `$${data.상품정보.가격_USD} ` : 'N/A';
+                        const shippingLog = data.상품정보.배송비_USD !== null ? `$${data.상품정보.배송비_USD} ` : 'N/A';
 
-                        console.log(`      💰 가격: ${priceLog} | 🚚 배송비: ${shippingLog} | 🎬 동영상: ${videoCount}개 | 📝 리뷰: ${reviewCount}개`);
+                        console.log(`      💰 가격: ${priceLog} | 🚚 배송비: ${shippingLog} | 🎬 동영상: ${videoCount} 개 | 📝 리뷰: ${reviewCount} 개`);
 
                         // 리뷰 비디오 URL 로깅
                         if (data.상품정보.리뷰_텍스트 && data.상품정보.리뷰_텍스트.length > 0) {
@@ -719,21 +670,21 @@ async function runDetailCrawler() {
 
                             if (reviewVideoCount > 0 || reviewImageCount > 0 || reviewVideoThumbnailCount > 0) {
                                 const parts = [];
-                                if (reviewImageCount > 0) parts.push(`이미지 ${reviewImageCount}개`);
-                                if (reviewVideoCount > 0) parts.push(`🎥 비디오 ${reviewVideoCount}개`);
-                                if (reviewVideoThumbnailCount > 0) parts.push(`썸네일 ${reviewVideoThumbnailCount}개`);
-                                console.log(`      📸 리뷰 미디어: ${parts.join(' | ')}`);
+                                if (reviewImageCount > 0) parts.push(`이미지 ${reviewImageCount} 개`);
+                                if (reviewVideoCount > 0) parts.push(`🎥 비디오 ${reviewVideoCount} 개`);
+                                if (reviewVideoThumbnailCount > 0) parts.push(`썸네일 ${reviewVideoThumbnailCount} 개`);
+                                console.log(`      📸 리뷰 미디어: ${parts.join(' | ')} `);
                             }
                         }
 
                         await markTaskStatus(currentTask.id, 'COMPLETED');
                     } else {
-                        console.log(`   🚫 저장 실패: ${saveResult.reason}`);
+                        console.log(`   🚫 저장 실패: ${saveResult.reason} `);
                         console.log(`      상품명: ${data.상품정보.상품명.substring(0, 60)}...`);
                         await markTaskStatus(currentTask.id, 'COMPLETED');
                     }
                 } else {
-                    console.log(`   ℹ️ 저장 건너뜀 (직배송 X): ${data.상품정보.상품명.substring(0, 60)}...`);
+                    console.log(`   ℹ️ 저장 건너뜀(직배송 X): ${data.상품정보.상품명.substring(0, 60)}...`);
                     await markTaskStatus(currentTask.id, 'COMPLETED');
                 }
 
@@ -744,14 +695,14 @@ async function runDetailCrawler() {
                     console.log("   ⚠️ 상품 판매 중지 또는 삭제됨. FAILED 처리 후 다음 작업 진행.");
                     await markTaskStatus(currentTask.id, 'FAILED');
                 } else {
-                    throw new Error(`CRAWL_FAILED: ${data.error}`);
+                    throw new Error(`CRAWL_FAILED: ${data.error} `);
                 }
             } else {
                 throw new Error("CRAWL_FAILED: 데이터 누락");
             }
 
         } catch (error) {
-            console.error(`   ❌ 오류 발생: ${error.message}`);
+            console.error(`   ❌ 오류 발생: ${error.message} `);
 
             if (error.message?.includes('ERR_PROXY') || error.name === 'TimeoutError' || error.message?.includes('net::ERR') || error.message === 'BOT_DETECTED') {
                 console.log("🌐 네트워크 오류 또는 봇 탐지. 브라우저 재시작.");
