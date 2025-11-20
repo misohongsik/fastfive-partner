@@ -26,12 +26,13 @@ app.post('/api/inquiry', async (req, res) => {
         const sql = `
             INSERT INTO consulting_requests 
             (company_name, customer_name, phone_number, preferred_area, headcount, move_in_date, status)
-            VALUES (?, ?, ?, ?, ?, ?, '신규')
+            VALUES ($1, $2, $3, $4, $5, $6, '신규')
+            RETURNING id
         `;
 
-        const [result] = await db.execute(sql, [company_name, customer_name, phone_number, preferred_area, headcount, move_in_date]);
+        const result = await db.query(sql, [company_name, customer_name, phone_number, preferred_area, headcount, move_in_date]);
 
-        res.status(201).json({ success: true, message: 'Inquiry submitted successfully', id: result.insertId });
+        res.status(201).json({ success: true, message: 'Inquiry submitted successfully', id: result.rows[0].id });
     } catch (error) {
         console.error('Error submitting inquiry:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -41,7 +42,7 @@ app.post('/api/inquiry', async (req, res) => {
 // API 2: Get Admin List
 app.get('/api/admin/list', async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT * FROM consulting_requests ORDER BY created_at DESC');
+        const { rows } = await db.query('SELECT * FROM consulting_requests ORDER BY created_at DESC');
         res.json({ success: true, data: rows });
     } catch (error) {
         console.error('Error fetching list:', error);
@@ -58,9 +59,9 @@ app.patch('/api/admin/status', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Missing id or status' });
         }
 
-        const [result] = await db.execute('UPDATE consulting_requests SET status = ? WHERE id = ?', [status, id]);
+        const result = await db.query('UPDATE consulting_requests SET status = $1 WHERE id = $2', [status, id]);
 
-        if (result.affectedRows === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({ success: false, message: 'Request not found' });
         }
 
