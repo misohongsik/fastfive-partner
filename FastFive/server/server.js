@@ -10,6 +10,31 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Initialize Database Table
+const initDb = async () => {
+    try {
+        const createTableQuery = `
+            CREATE TABLE IF NOT EXISTS consulting_requests (
+                id SERIAL PRIMARY KEY,
+                company_name VARCHAR(255) NOT NULL,
+                customer_name VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(50) NOT NULL,
+                preferred_area VARCHAR(255),
+                headcount INTEGER,
+                move_in_date DATE,
+                status VARCHAR(50) DEFAULT '신규',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+        await db.query(createTableQuery);
+        console.log('✅ Database table checked/created successfully');
+    } catch (error) {
+        console.error('❌ Error initializing database table:', error);
+    }
+};
+
+initDb();
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
