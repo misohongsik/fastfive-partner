@@ -4,7 +4,7 @@
   "main": "asin_harvester.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install-all": "npm install --prefix FastFive/client && npm install --prefix FastFive/server",
+    "install-all": "cd FastFive/client && npm install && cd ../server && npm install",
     "postinstall": "npm run install-all",
     "build": "npm run build --prefix FastFive/client",
     "start": "node FastFive/server/server.js",
