@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "asin_harvester.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install-all": "npm install --prefix FastFive/client && npm install --prefix FastFive/server",
+    "build": "npm run build --prefix FastFive/client",
+    "start": "node FastFive/server/server.js",
+    "heroku-postbuild": "npm run build"
   },
   "keywords": [],
   "author": "",
