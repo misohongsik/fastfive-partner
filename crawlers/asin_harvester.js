@@ -15,7 +15,7 @@ const AMAZON_LOGIN = {
     email: 'misohongsik@gmail.com',
     password: '@calla831031'
 };
-const COOKIE_FILE = path.join(__dirname, 'amazon_session.json');
+const COOKIE_FILE = path.join(__dirname, '../config/amazon_session.json');
 
 // --- 프록시 설정 (Smartproxy) ---
 const USE_PROXY = 0;
@@ -74,7 +74,7 @@ async function autoScroll(page) {
                 totalHeight += distance;
 
                 // 페이지 끝에 도달하면 멈춤
-                if(totalHeight >= scrollHeight - window.innerHeight){
+                if (totalHeight >= scrollHeight - window.innerHeight) {
                     clearInterval(timer);
                     resolve();
                 }
@@ -151,11 +151,11 @@ async function saveProductQueue(categoryId, items) {
             try {
                 // URL은 추출 시 이미 정규화됨 (extractBSRItems 참조)
                 const [result] = await connection.query(query, [categoryId, item.asin, item.url, item.rank]);
-                 if (result.affectedRows > 0) {
+                if (result.affectedRows > 0) {
                     processedCount++;
                 }
             } catch (error) {
-                 console.error(`   ⚠️ 큐 저장 오류 (ASIN: ${item.asin}):`, error.message);
+                console.error(`   ⚠️ 큐 저장 오류 (ASIN: ${item.asin}):`, error.message);
             }
         }
         await connection.commit();
@@ -172,7 +172,7 @@ async function saveProductQueue(categoryId, items) {
 async function markCategoryHarvested(categoryId) {
     try {
         await dbPool.query('UPDATE amazon_bsr_categories SET last_harvested_at = CURRENT_TIMESTAMP WHERE id = ?', [categoryId]);
-    } catch (error) {}
+    } catch (error) { }
 }
 
 
@@ -244,7 +244,7 @@ async function checkLoginStatus(page) {
 async function performAmazonLogin(page) {
     console.log("🔑 아마존 로그인 시도 중...");
     try {
-         await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
+        await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
 
         await page.waitForSelector('#ap_email', { visible: true, timeout: 15000 });
         await page.type('#ap_email', AMAZON_LOGIN.email, { delay: 50 });
@@ -269,11 +269,11 @@ async function performAmazonLogin(page) {
                 await page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 90000 });
             }
         } catch (error) {
-             const url = page.url();
-             if (url.includes('validateCaptcha') || url.includes('signin')) {
-                 console.error("❌ 로그인 실패: 시간 초과 (90초).");
-                 return false;
-             }
+            const url = page.url();
+            if (url.includes('validateCaptcha') || url.includes('signin')) {
+                console.error("❌ 로그인 실패: 시간 초과 (90초).");
+                return false;
+            }
         }
 
         const finalCheck = await checkLoginStatus(page);
@@ -311,7 +311,7 @@ async function extractBSRItems(page, minRank, maxRank) {
 
         // 2. 각 순위 뱃지를 기준으로 정보 추출
         rankElements.forEach(rankElement => {
-            
+
             // 2-1. 순위 파싱 및 필터링
             const rankText = rankElement.textContent.trim().replace('#', '');
             const rank = parseInt(rankText, 10);
@@ -372,11 +372,11 @@ async function runAsinHarvester() {
     async function initializeBrowser() {
         console.log("\n🔄 브라우저 시작/재시작 및 로그인 확인 중...");
         if (browser) {
-            try { await browser.close(); } catch (e) {}
+            try { await browser.close(); } catch (e) { }
         }
 
         const sessionId = generateSessionId();
-        
+
         // 프록시 사용 여부에 따라 로그 다르게 표시
         if (USE_PROXY === 1) {
             console.log(`   🔑 새 Proxy Session ID: ${sessionId}`);
@@ -446,7 +446,7 @@ async function runAsinHarvester() {
                         // [해결책 적용] 스크롤 실행하여 지연 로딩 콘텐츠 로드
                         await autoScroll(page);
 
-                         // 봇 탐지 확인
+                        // 봇 탐지 확인
                         const isBotCheck = await page.evaluate(() => {
                             return document.title.includes("Robot Check") || !!document.querySelector('form[action*="/errors/validateCaptcha"]');
                         });
@@ -488,7 +488,7 @@ async function runAsinHarvester() {
                     success = true; // 성공 시 루프 탈출
 
                 } catch (error) {
-                    console.error(`   ❌ 오류 발생 (재시도 ${retry+1}/${MAX_RETRY}): ${error.message}`);
+                    console.error(`   ❌ 오류 발생 (재시도 ${retry + 1}/${MAX_RETRY}): ${error.message}`);
                     retry++;
 
                     // 네트워크 오류, 타임아웃, 봇 탐지 시 브라우저 재시작
@@ -496,10 +496,10 @@ async function runAsinHarvester() {
                         console.log("🌐 네트워크 오류 또는 봇 탐지. IP 교체(프록시 사용 시) 및 브라우저 재시작.");
                         // 재시작 실패 시 스크립트 종료
                         if (!(await initializeBrowser())) {
-                             console.error("🛑 브라우저 재시작 실패. 스크립트 종료.");
-                             if (browser) await browser.close();
-                             if (dbPool) await dbPool.end();
-                             return;
+                            console.error("🛑 브라우저 재시작 실패. 스크립트 종료.");
+                            if (browser) await browser.close();
+                            if (dbPool) await dbPool.end();
+                            return;
                         }
                         // 재시작 후 retry 카운트 유지하며 다시 시도
                     } else if (retry >= MAX_RETRY) {
@@ -516,7 +516,7 @@ async function runAsinHarvester() {
                 const savedCount = await saveProductQueue(category.id, uniqueCollectedItems);
                 console.log(`   📥 총 ${uniqueCollectedItems.length}개 수집 / ${savedCount}건 DB 저장/갱신 완료.`);
             } else if (success) {
-                 console.log(`   ℹ️ 목표 순위 범위 내 상품 없음.`);
+                console.log(`   ℹ️ 목표 순위 범위 내 상품 없음.`);
             }
 
             // 실패했더라도 시각은 업데이트하여 무한 반복 방지

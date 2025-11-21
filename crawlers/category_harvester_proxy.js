@@ -17,7 +17,7 @@ const AMAZON_LOGIN = {
     password: '@calla831031'
 };
 // 세션 파일은 이전 스크립트와 공유합니다.
-const COOKIE_FILE = path.join(__dirname, 'amazon_session.json');
+const COOKIE_FILE = path.join(__dirname, '../config/amazon_session.json');
 
 // --- 프록시 설정 (Smartproxy) ---
 const USE_PROXY = 0;
@@ -145,11 +145,11 @@ async function saveSubcategories(parentCategory, subcategories) {
                     `INSERT IGNORE INTO amazon_bsr_categories (category_name, bsr_url, url_hash, parent_id, depth, full_path) VALUES (?, ?, ?, ?, ?, ?)`,
                     [cat.name, normalizedUrl, urlHash, parentCategory.id, newDepth, fullPath]
                 );
-                 if (result.affectedRows > 0) {
+                if (result.affectedRows > 0) {
                     insertedCount++;
                 }
             } catch (error) {
-                 console.error(`   ⚠️ 카테고리 저장 오류 (${cat.name}):`, error.message);
+                console.error(`   ⚠️ 카테고리 저장 오류 (${cat.name}):`, error.message);
             }
         }
         await connection.commit();
@@ -248,7 +248,7 @@ async function checkLoginStatus(page) {
 async function performAmazonLogin(page) {
     console.log("🔑 아마존 로그인 시도 중...");
     try {
-         await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
+        await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
 
         // 1. 이메일 입력
         await page.waitForSelector('#ap_email', { visible: true, timeout: 15000 });
@@ -278,10 +278,10 @@ async function performAmazonLogin(page) {
             }
         } catch (error) {
             const url = page.url();
-             if (url.includes('validateCaptcha') || url.includes('signin')) {
-                 console.error("❌ 로그인 실패: 시간 초과 (90초).");
-                 return false;
-             }
+            if (url.includes('validateCaptcha') || url.includes('signin')) {
+                console.error("❌ 로그인 실패: 시간 초과 (90초).");
+                return false;
+            }
         }
 
         const finalCheck = await checkLoginStatus(page);
@@ -365,11 +365,11 @@ async function extractSubCategories(page) {
                 if (link.getAttribute('aria-current') !== 'page') {
                     const name = link.innerText.trim();
                     const url = link.href;
-                    
+
                     // URL 유효성 검사 (BSR 형식인지 확인) 및 불필요한 이름 제외
                     if (name && url && (url.includes('/Best-Sellers-') || url.includes('/zgbs/') || url.includes('/bestsellers/'))) {
                         if (name !== "Any Department" && name !== "모든 부서") {
-                           results.push({ name, url });
+                            results.push({ name, url });
                         }
                     }
                 }
@@ -398,7 +398,7 @@ async function runCategoryHarvester() {
     async function initializeBrowser() {
         console.log("\n🔄 브라우저 시작/재시작 및 로그인 확인 중...");
         if (browser) {
-            try { await browser.close(); } catch (e) {}
+            try { await browser.close(); } catch (e) { }
         }
 
         const sessionId = generateSessionId();
@@ -436,7 +436,7 @@ async function runCategoryHarvester() {
     let processedCount = 0;
     let currentCategory;
 
-    
+
     // 메인 루프 (DB 큐 기반 BFS)
     while ((currentCategory = await getNextUnexploredCategory()) !== null) {
         processedCount++;
@@ -459,8 +459,8 @@ async function runCategoryHarvester() {
                 // initializeBrowser 호출 시 성공 여부를 확인하는 것이 좋습니다.
                 if (!(await initializeBrowser())) {
                     console.error("🛑 브라우저 재시작 실패로 스크립트를 종료합니다.");
-                    break; 
-               }
+                    break;
+                }
                 continue; // 현재 카테고리를 다시 시도 (is_explored가 FALSE이므로 다시 선택됨)
             }
 
@@ -471,8 +471,8 @@ async function runCategoryHarvester() {
             const insertedCount = await saveSubcategories(currentCategory, subcategories);
 
             if (subcategories.length > 0) {
-                 console.log(`   📥 ${subcategories.length}개 발견 / ${insertedCount}개 신규 저장.`);
-            } 
+                console.log(`   📥 ${subcategories.length}개 발견 / ${insertedCount}개 신규 저장.`);
+            }
             // 최하위 카테고리 로그는 extractSubCategories 내부에서 처리됨
 
             // 5. 현재 카테고리 완료 처리
@@ -488,7 +488,7 @@ async function runCategoryHarvester() {
                 if (!(await initializeBrowser())) {
                     console.error("🛑 브라우저 재시작 실패로 스크립트를 종료합니다.");
                     break;
-               }
+                }
                 continue; // 현재 카테고리를 다시 시도
             }
 

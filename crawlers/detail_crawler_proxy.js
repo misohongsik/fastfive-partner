@@ -5,7 +5,7 @@ puppeteer.use(StealthPlugin());
 const mysql = require('mysql2/promise');
 const path = require('path');
 const fs = require('fs');
-const { isSafeProduct } = require('./Product_Filter');
+const { isSafeProduct } = require('../utils/Product_Filter');
 
 // =======================================================================
 // ▼▼▼ 설정 섹션 ▼▼▼
@@ -15,7 +15,7 @@ const AMAZON_LOGIN = {
     email: 'misohongsik@gmail.com',
     password: '@calla831031'
 };
-const COOKIE_FILE = path.join(__dirname, 'amazon_session.json');
+const COOKIE_FILE = path.join(__dirname, '../config/amazon_session.json');
 
 const USE_PROXY = 0;
 const PROXY_CONFIG = {
@@ -460,6 +460,56 @@ async function crawlProductData() {
 
             if (imagesFound && videosFound) break;
         }
+        // New Logic: Check for .video-items-metadata (vse-video-items)
+        if (!videosFound) {
+            const metadataEl = document.querySelector('.video-items-metadata');
+            if (metadataEl) {
+                const dataVideoItems = metadataEl.getAttribute('data-video-items');
+                if (dataVideoItems) {
+                    try {
+                        const items = JSON.parse(dataVideoItems);
+                        if (Array.isArray(items) && items.length > 0) {
+                            items.forEach(item => {
+                                let videoUrl = item.videoURL;
+                                
+                                // Try to find mp4 in videoPreviewAssets
+                                if (item.videoPreviewAssets) {
+                                    const parts = item.videoPreviewAssets.split(',');
+                                    for (let i = 0; i < parts.length; i += 3) {
+                                        const url = parts[i];
+                                        const mime = parts[i+2];
+                                        if (mime && mime.trim() === 'video/mp4') {
+                                            videoUrl = url;
+                                            break; 
+                                        }
+                                    }
+                                }
+
+                                // Parse duration
+                                let durationSeconds = 0;
+                                if (item.formattedDuration) {
+                                    const timeParts = item.formattedDuration.split(':').map(Number);
+                                    if (timeParts.length === 2) {
+                                        durationSeconds = timeParts[0] * 60 + timeParts[1];
+                                    } else if (timeParts.length === 3) {
+                                        durationSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+                                    }
+                                }
+
+                                productData.상품정보.동영상.push({
+                                    title: item.title || '',
+                                    duration: durationSeconds || '',
+                                    thumbnail: item.videoImageUrl || '',
+                                    url: videoUrl
+                                });
+                            });
+                            if (productData.상품정보.동영상.length > 0) videosFound = true;
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+
                     // Fallback 1: .mp4 URL 직접 검색 (videoGalleryData가 없을 때)
         if (!videosFound) {
             for (const script of scripts) {

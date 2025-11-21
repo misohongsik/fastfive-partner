@@ -16,11 +16,11 @@ const AMAZON_LOGIN = {
     email: 'misohongsik@gmail.com',
     password: '@calla831031'
 };
-const COOKIE_FILE = path.join(__dirname, 'amazon_session.json');
+const COOKIE_FILE = path.join(__dirname, '../config/amazon_session.json');
 
 // --- IP 변경 설정 (프록시 대체) ---
 // 외부 스크립트 경로 설정 (Windows 경로 표기 시 \\ 사용)
-const IP_CHANGE_SCRIPT_PATH = 'C:\\Users\\misoh\\Coupang_NaverBlog_Project\\Amazon\\change-ip_basic.js';
+const IP_CHANGE_SCRIPT_PATH = 'C:\\Users\\misoh\\Coupang_NaverBlog_Project\\Amazon\\utils\\change-ip_basic.js';
 // 기존 프록시 설정(USE_PROXY, PROXY_CONFIG)은 제거되었습니다.
 
 // --- DB 설정 (Connection Pool 사용) ---
@@ -142,7 +142,7 @@ async function markTaskStatus(taskId, status) {
 
 // [장애 복구] 작업 상태 되돌리기 (브라우저 재시작/스크립트 시작 시 호출)
 async function resetProcessingTasks() {
-     try {
+    try {
         const [result] = await dbPool.query(
             `UPDATE amazon_product_queue SET status = 'PENDING', updated_at = CURRENT_TIMESTAMP WHERE status = 'PROCESSING'`
         );
@@ -220,7 +220,7 @@ async function launchBrowser() {
         '--disable-blink-features=AutomationControlled',
         '--lang=en-US,en'
     ];
-    
+
     // 프록시 관련 코드(USE_PROXY 체크 및 --proxy-server 추가) 제거됨
 
     const browser = await puppeteer.launch({
@@ -229,7 +229,7 @@ async function launchBrowser() {
         ignoreDefaultArgs: ["--enable-automation"],
     });
     const page = await browser.newPage();
-    
+
     // 프록시 인증 코드(page.authenticate) 제거됨
 
     return { browser, page };
@@ -277,7 +277,7 @@ async function checkLoginStatus(page) {
 async function performAmazonLogin(page) {
     console.log("🔑 아마존 로그인 시도 중...");
     try {
-         await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
+        await page.goto('https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2F&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0', { waitUntil: 'networkidle0' });
 
         await page.waitForSelector('#ap_email', { visible: true, timeout: 15000 });
         await page.type('#ap_email', AMAZON_LOGIN.email, { delay: 50 });
@@ -302,11 +302,11 @@ async function performAmazonLogin(page) {
                 await page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 90000 });
             }
         } catch (error) {
-             const url = page.url();
-             if (url.includes('validateCaptcha') || url.includes('signin')) {
-                 console.error("❌ 로그인 실패: 시간 초과 (90초).");
-                 return false;
-             }
+            const url = page.url();
+            if (url.includes('validateCaptcha') || url.includes('signin')) {
+                console.error("❌ 로그인 실패: 시간 초과 (90초).");
+                return false;
+            }
         }
 
         const finalCheck = await checkLoginStatus(page);
@@ -527,7 +527,7 @@ async function initializeBrowser(forceIpChange = false) {
     // 1. 기존 브라우저 종료
     if (browser) {
         console.log("   🧹 기존 브라우저 종료 중...");
-        try { await browser.close(); } catch (e) {}
+        try { await browser.close(); } catch (e) { }
     }
 
     // 2. IP 변경 실행 (필요한 경우)
@@ -614,7 +614,7 @@ async function runDetailCrawler() {
             if (data && data.상품정보 && data.상품정보.ASIN) {
                 // ASIN 검증 (리디렉션 방지)
                 if (data.상품정보.ASIN !== currentTask.asin) {
-                     throw new Error("ASIN_MISMATCH");
+                    throw new Error("ASIN_MISMATCH");
                 }
 
                 // 데이터 저장
@@ -632,8 +632,8 @@ async function runDetailCrawler() {
                 if (data.error === 'BOT_DETECTED') {
                     throw new Error("BOT_DETECTED");
                 } else if (data.error === 'PRODUCT_UNAVAILABLE') {
-                     console.log("   ⚠️ 상품 판매 중지 또는 삭제됨. FAILED 처리 후 다음 작업 진행.");
-                     await markTaskStatus(currentTask.id, 'FAILED');
+                    console.log("   ⚠️ 상품 판매 중지 또는 삭제됨. FAILED 처리 후 다음 작업 진행.");
+                    await markTaskStatus(currentTask.id, 'FAILED');
                 } else {
                     throw new Error(`CRAWL_FAILED: ${data.error}`);
                 }
@@ -652,10 +652,10 @@ async function runDetailCrawler() {
 
                 // initializeBrowser(true) 호출: IP 변경 실행 및 PROCESSING 상태를 PENDING으로 되돌림
                 if (!(await initializeBrowser(true))) {
-                     console.error("🛑 브라우저 재시작 실패. 스크립트 종료.");
-                     if (browser) await browser.close();
-                     if (dbPool) await dbPool.end();
-                     return;
+                    console.error("🛑 브라우저 재시작 실패. 스크립트 종료.");
+                    if (browser) await browser.close();
+                    if (dbPool) await dbPool.end();
+                    return;
                 }
                 // 재시작 후 루프 처음으로 돌아가 다시 getNextTask() 호출 (자동 재시도)
 

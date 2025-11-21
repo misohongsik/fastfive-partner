@@ -1,0 +1,163 @@
+.realestate-page {
+    background: #f5f5f5;
+    color: #1a237e;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.re-header {
+    background: #1a237e;
+    color: white;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.re-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.re-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #C9A050;
+}
+
+.re-header nav {
+    display: flex;
+    gap: 30px;
+}
+
+.re-header nav a {
+    color: white;
+    font-weight: 600;
+}
+
+.re-hero {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: white;
+    padding: 120px 24px;
+    text-align: center;
+}
+
+.hero-content h2 {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero-content p {
+    font-size: 20px;
+    margin-bottom: 40px;
+    color: #C9A050;
+}
+
+.hero-content button {
+    background: #C9A050;
+    color: white;
+    padding: 16px 40px;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.re-properties {
+    padding: 100px 0;
+}
+
+.re-properties h2 {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 60px;
+    color: #1a237e;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.property-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.property-img {
+    font-size: 64px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.property-card h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #1a237e;
+}
+
+.property-card p {
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.property-card .price {
+    display: block;
+    font-size: 28px;
+    font-weight: 900;
+    color: #C9A050;
+}
+
+.re-services {
+    padding: 80px 0;
+    background: white;
+}
+
+.re-services h2 {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 900;
+    margin-bottom: 40px;
+    color: #1a237e;
+}
+
+.service-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.service {
+    background: #f5f5f5;
+    padding: 20px 30px;
+    border-left: 4px solid #C9A050;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.re-footer {
+    background: #1a237e;
+    color: white;
+    text-align: center;
+    padding: 30px 0;
+}

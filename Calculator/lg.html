@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LG U+ 결합 할인 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Embedded CSS */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; /* slate-50 */ }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #334155; /* slate-700 */ }
+        .input-field, .select-field { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; /* slate-300 */ border-radius: 0.375rem; box-shadow: sm; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+        .input-field:focus, .select-field:focus { border-color: #ec4899; /* pink-500 */ outline: none; box-shadow: 0 0 0 0.2rem rgba(236, 72, 153, 0.25); }
+        .input-field:disabled, .select-field:disabled { background-color: #e2e8f0; /* slate-200 */ cursor: not-allowed; opacity: 0.7; }
+        .btn-primary { background-color: #ec4899; /* pink-500 */ color: white; padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.3s ease; }
+        .btn-primary:hover { background-color: #db2777; /* pink-600 */ }
+        .btn-primary:disabled { background-color: #f472b6; cursor: not-allowed; }
+        .btn-secondary { background-color: #64748b; /* slate-500 */ color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.3s ease; }
+        .btn-secondary:hover { background-color: #475569; /* slate-600 */ }
+        .section-title { font-size: 1.5rem; font-weight: 700; color: #c026d3; /* fuchsia-600 */ margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f0abfc /* fuchsia-300 */;}
+        .result-card { background-color: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+        .result-label { color: #475569; /* slate-600 */ }
+        .result-value { color: #1e293b; /* slate-800 */ font-weight: 600;}
+        .total-value { color: #d946ef; /* fuchsia-500 */ font-size: 1.5rem; font-weight: 700;}
+        .mobile-line-item { border: 1px solid #e2e8f0; /* slate-200 */ padding: 1rem; border-radius: 0.375rem; margin-bottom: 0.75rem; }
+        .radio-label { margin-right: 1rem; margin-bottom: 0.5rem; display: inline-flex; align-items: center; cursor: pointer;}
+        .radio-input { margin-right: 0.5rem; accent-color: #ec4899; /* pink-500 */ }
+        .info-box { background-color: #fefce8; /* yellow-50 */ border-left: 4px solid #eab308; /* yellow-500 */ padding: 1rem; margin-bottom:1.5rem; font-size: 0.875rem; color: #713f12; /* yellow-800 */}
+        .info-box a { color: #854d0e; font-weight: 500; text-decoration: underline;}
+        .info-box a:hover { color: #713f12;}
+        .info-box ul { padding-left: 1.25rem; list-style-type: disc; margin-top: 0.5rem;}
+        .info-box ul ul { padding-left: 1rem; list-style-type: circle;}
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; margin-left: 10px; vertical-align: middle;}
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px;}
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%;}
+        input:checked + .slider { background-color: #ec4899; /* pink-500 */ }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .discount-details { background-color: #fce7f3; /* pink-100 */ border: 1px solid #f9a8d4; /* pink-300 */ padding: 1rem; border-radius: 0.375rem; font-size:0.875rem; }
+        .discount-details ul { padding-left: 1.25rem; list-style-type: disc; margin-left: 0.5rem;}
+        .discount-details ul ul { padding-left: 1rem; list-style-type: circle; }
+        .discount-details table { width: 100%; margin-bottom: 0.5rem; border-collapse: collapse; }
+        .discount-details th, .discount-details td { padding: 0.35rem 0.5rem; text-align: center; border: 1px solid #fbcfe8; /* pink-200 */ font-size: 0.75rem; }
+        .discount-details th { background-color: #fdf2f8; /* pink-50 */ font-weight: 600; }
+        .summary-item { margin-bottom: 0.25rem; }
+        .message-script-area { width: 100%; min-height: 100px; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem; white-space: pre-wrap; word-wrap: break-word; }
+        .copy-button-container { text-align: right; margin-top: 0.5rem; }
+        .copy-feedback { font-size: 0.75rem; color: green; margin-left: 0.5rem; }
+        .hidden { display: none !important; }
+
+        /* New Styles for 2-column Summary Card */
+        .summary-card-main {
+            background-color: #fff;
+            border: 2px solid #ec4899; /* pink-500 */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem; /* Increased gap between columns */
+        }
+
+        .summary-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* Increased gap between items in a column */
+        }
+
+        .summary-item-block {
+            background-color: #f8fafc; /* slate-50 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .summary-item-label {
+            font-size: 1rem; /* text-base */
+            font-weight: 500; /* font-medium */
+            color: #475569; /* slate-600 */
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-item-value {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #c026d3; /* fuchsia-600 */
+            line-height: 1.1;
+        }
+
+        .pre-discount-price {
+            font-size: 0.875rem; /* text-sm */
+            color: #64748b; /* slate-500 */
+            text-decoration: line-through;
+            margin-bottom: 0.25rem;
+        }
+
+        .discount-value {
+            color: #2563eb; /* blue-600 */
+        }
+
+        .gift-value {
+            color: #16a34a; /* green-600 */
+        }
+
+        .discount-reason {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #fefce8; /* yellow-50 */
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: #854d0e; /* yellow-800 */
+            text-align: center;
+            border-left: 4px solid #f59e0b; /* amber-500 */
+            grid-column: 1 / -1; /* Make it span both columns */
+        }
+        .btn-ai {
+            background-color: #0ea5e9; /* sky-500 */
+        }
+        .btn-ai:hover {
+            background-color: #0284c7; /* sky-600 */
+        }
+        .btn-ai:disabled {
+            background-color: #7dd3fc; /* sky-300 */
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+    <header class="bg-pink-700 text-white p-6 shadow-md">
+        <div class="container mx-auto max-w-4xl flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">웨이팅 인터넷 통합접수센터</h1>
+                <p class="text-pink-200 mt-1">LG U+ 결합 할인 계산기</p>
+            </div>
+            <div class="flex items-center">
+                <span class="text-sm mr-2">VAT별도</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="vatToggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="text-sm ml-2">VAT포함</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+        <section id="inputSection" class="mb-8">
+            <div class="info-box">
+                <p class="font-semibold text-amber-700">⚠️ 민감정보</p>
+                <p><a href="https://lg-sensitiveinfo.com/" target="_blank">https://lg-sensitiveinfo.com/</a></p>
+                <p class="text-sm">ㄴ> 위 링크를 고객에게 문자로 전송해주세요. (아래 스크립트 복사 기능 이용)</p>
+                <hr class="my-2 border-yellow-300">
+                <p><strong>참고 스프레드시트:</strong> <a href="https://docs.google.com/spreadsheets/d/10d21RrhIPBiJr7RZIHnk0h1dB4GvTEcHCuXSyFYw1M4/edit?gid=0#gid=0" target="_blank">바로가기</a></p>
+            </div>
+
+            <h2 class="section-title">1. 서비스 선택 (3년 약정 기준, VAT 포함)</h2>
+            <p class="mb-6 text-sm text-slate-600">아래 항목들을 선택하거나 입력해주세요. 모든 요금은 LG U+ 표준 3년 약정, 부가세 포함 정가를 기준으로 합니다.</p>
+            
+            <div class="input-group">
+                <label class="input-label">인터넷 유형 선택</label>
+                <div class="flex items-center space-x-4">
+                    <label class="radio-label"><input type="radio" name="internetType" value="bundle" class="radio-input" checked> 인터넷 + TV 번들</label>
+                    <label class="radio-label"><input type="radio" name="internetType" value="standalone" class="radio-input"> 인터넷 단독</label>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="internetPlan" class="input-label">인터넷 요금제</label>
+                    <select id="internetPlan" class="select-field">
+                        <option value="none">선택 안함</option>
+                    </select>
+                    <p class="text-xs text-slate-500 mt-1" id="internetNotes">참고: WiFi 공유기 포함.</p>
+                </div>
+                
+                <div class="input-group">
+                    <label for="tvPlan" class="input-label">U+tv 요금제 (1번째 TV)</label>
+                    <select id="tvPlan" class="select-field">
+                        <option value="none">선택 안함</option>
+                    </select>
+                     <p class="text-xs text-slate-500 mt-1">참고: 위 요금은 셋톱박스 포함, 인터넷 결합 시 3년 약정 기준입니다.</p>
+                </div>
+
+                <div class="input-group hidden" id="tvStbGroup"> 
+                    <label for="tvStb" class="input-label">U+tv 셋톱박스 (1번째 TV)</label>
+                    <select id="tvStb" class="select-field">
+                        <option value="UHD4" data-price="0">UHD4 (기본 포함 가정)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="additionalTvPlan" class="input-label">추가 U+tv 선택 (2번째 TV)</label>
+                    <select id="additionalTvPlan" class="select-field">
+                        <option value="none">선택 안함</option>
+                    </select>
+                      <p class="text-xs text-slate-500 mt-1">참고: 추가 TV 요금은 플랜과 셋톱박스 임대료가 포함된 총 금액입니다.</p>
+                </div>
+                
+                <div class="input-group">
+                    <label for="phonePlan" class="input-label">인터넷전화 요금제 (선택)</label>
+                    <select id="phonePlan" class="select-field">
+                        <option value="none" selected>선택 안함</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group mt-6">
+                <label class="input-label">모바일 회선 정보 (결합 할인에 영향)</label>
+                <div class="flex items-center mb-2">
+                    <label for="mobileLinesCount" class="mr-2 text-sm text-slate-700">결합할 모바일 회선 수:</label>
+                    <input type="number" id="mobileLinesCount" min="0" max="10" value="0" class="input-field w-20 text-center">
+                </div>
+                <div id="mobileLinesContainer" class="space-y-3"></div>
+                 <p class="text-xs text-slate-500 mt-1">참고: '참쉬운 가족결합'은 최대 10회선, '투게더 결합'은 최대 5회선까지 휴대폰 결합 가능.</p>
+            </div>
+        </section>
+
+        <section id="discountTypeSection" class="mb-8">
+            <h2 class="section-title">2. 결합 할인 유형 선택</h2>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <p class="mb-4 text-sm text-slate-600">가장 유리한 할인 유형을 선택하거나, 각 유형별 예상 요금을 비교해보세요. (인터넷 요금 할인 기준)</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                    <div class="flex items-center">
+                        <label class="radio-label"><input type="radio" name="discountType" value="none" class="radio-input" checked> 결합할인 없음</label>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="radio-label"><input type="radio" name="discountType" value="cham_family" class="radio-input"> 참쉬운 가족결합</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="chamFamilyDetailsToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="ml-1 text-xs text-slate-500">(상세보기)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="radio-label"><input type="radio" name="discountType" value="together_bundle" class="radio-input"> 투게더 결합</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="togetherDetailsToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="ml-1 text-xs text-slate-500">(상세보기)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="radio-label"><input type="radio" name="discountType" value="internet_family_all_together" class="radio-input"> 인터넷 가족끼리 다모여 결합</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="internetFamilyDetailsToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="ml-1 text-xs text-slate-500">(상세보기)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="radio-label"><input type="radio" name="discountType" value="mvno_bundle" class="radio-input"> 알뜰폰 결합</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mvnoLGUDetailsToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="ml-1 text-xs text-slate-500">(상세보기)</span>
+                    </div>
+                </div>
+
+                <div id="chamFamilyDetailsContainer" class="mt-3 hidden discount-details">
+                    <p class="font-semibold mb-1">참쉬운 가족결합 상세:</p>
+                    <p>예상 인터넷 할인: <span id="detailCfInternetDiscount" class="font-bold">0</span>원</p>
+                    <p>예상 휴대폰 총 할인: <span id="detailCfMobileDiscount" class="font-bold">0</span>원</p>
+                    <hr class="my-2 border-pink-300">
+                    <p class="text-xs mt-2 mb-1 text-pink-700 font-semibold">■ 핵심 혜택</p>
+                    <p class="text-xs mb-2">조건 없이 가족이 모이면 할인을 받는 결합 상품입니다.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">결합<br>휴대폰 수</th>
+                                <th colspan="3">휴대폰 할인 (월)</th>
+                                <th colspan="3">인터넷 할인 (월)</th>
+                            </tr>
+                            <tr>
+                                <th>~6.9만</th>
+                                <th>6.9만~</th>
+                                <th>8.8만~</th>
+                                <th>100M</th>
+                                <th>500M</th>
+                                <th>1G</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1대</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>5,500원</td>
+                                <td>9,900원</td>
+                                <td>13,200원</td>
+                            </tr>
+                            <tr>
+                                <td>2대</td>
+                                <td>2,200원</td>
+                                <td>3,300원</td>
+                                <td>4,400원</td>
+                                <td colspan="3" rowspan="3" style="vertical-align:middle;">상동</td>
+                            </tr>
+                            <tr>
+                                <td>3대</td>
+                                <td>3,300원</td>
+                                <td>5,500원</td>
+                                <td>6,600원</td>
+                            </tr>
+                            <tr>
+                                <td>4-10대</td>
+                                <td>4,400원</td>
+                                <td>6,600원</td>
+                                <td>8,800원</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 주요 조건 및 범위</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li>최대 인터넷 3회선 + 휴대폰 10회선 결합 가능</li>
+                        <li>휴대폰은 2대부터 할인 적용</li>
+                        <li>인터넷과 휴대폰 명의자 달라도 결합 가능 (가족관계 증빙 필요)</li>
+                        <li>알뜰폰 결합 시, 결합 내 알뜰폰 휴대폰 번호 개수 X U+ 휴대폰에 440원 추가 할인 제공</li>
+                        <li>결합 범위: 배우자, 직계 존비속(아들, 딸, 손자, 증손), 형제, 자매, 사위, 며느리, 배우자의 부모, 형제, 자매</li>
+                        <li>너겟 요금제도 결합 가능</li>
+                    </ul>
+                </div>
+                <div id="togetherDetailsContainer" class="mt-3 hidden discount-details">
+                    <p class="font-semibold mb-1">투게더 결합 상세:</p>
+                    <p>예상 인터넷 할인: <span id="detailTgInternetDiscount" class="font-bold">0</span>원</p>
+                    <p>예상 휴대폰 총 할인: <span id="detailTgMobileDiscount" class="font-bold">0</span>원</p>
+                    <hr class="my-2 border-pink-300">
+                    <p class="text-xs mt-2 mb-1 text-pink-700 font-semibold">■ 핵심 혜택</p>
+                    <p class="text-xs mb-2">가족, 친구, 지인 누구와도 결합하여 할인받는 상품입니다.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>결합 휴대폰 수</th>
+                                <th>휴대폰 할인 (인당)</th>
+                                <th>인터넷 할인</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2대</td>
+                                <td>10,000원</td>
+                                <td rowspan="3" style="vertical-align:middle;">500M 이상<br>11,000원</td>
+                            </tr>
+                            <tr>
+                                <td>3대</td>
+                                <td>14,000원</td>
+                            </tr>
+                            <tr>
+                                <td>4-5대</td>
+                                <td>20,000원</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 주요 조건</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li>최대 인터넷 5회선 + 휴대폰 5회선 결합 가능</li>
+                        <li>인터넷 500M 이상 & 모든 결합 휴대폰 85,000원 이상 요금제 이용 시 가능</li>
+                        <li>100M 인터넷 결합 불가, '인터넷 가족끼리 다모여'와 중복 불가</li>
+                    </ul>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 결합 유형</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li><b>가족 결합:</b> 가족관계증명서 필요, 요금 각자 청구
+                            <ul>
+                                <li>범위: 배우자, 직계 존비속, 형제자매, 사위/며느리, 배우자의 부모/형제자매</li>
+                            </ul>
+                        </li>
+                        <li><b>지인 결합:</b> 친구/연인 등, 대표자 1인이 구성원 통신료 모두 납부</li>
+                    </ul>
+                </div>
+                 <div id="internetFamilyDetailsContainer" class="mt-3 hidden discount-details">
+                    <p class="font-semibold mb-1">인터넷 가족끼리 다모여 결합 상세:</p>
+                    <p>예상 추가 인터넷 할인 (자회선): <span id="detailIfInternetDiscount" class="font-bold">0</span>원</p>
+                    <hr class="my-2 border-pink-300">
+                    <p class="text-xs mt-2 mb-1 text-pink-700 font-semibold">■ 핵심 혜택</p>
+                    <p class="text-xs mb-2">기존 U+ 인터넷 사용 가족이 있으면 추가 회선에 <strong>월 5,500원</strong>을 할인해 드립니다.</p>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 주요 조건</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li>모회선 1개 + 자회선 10개까지 결합 가능</li>
+                        <li>'참쉬운 가족결합', '투게더 결합'과 중복 불가</li>
+                        <li>기존 결합(가족무한사랑 등)에 유선 상품이 포함되어 있어야 가능 (무선만 있는 경우 불가)</li>
+                        <li><strong class="text-red-600">'참쉬운 가족결합' 또는 '투게더 결합' 할인을 받고 있는 인터넷을 모회선으로 지정하여 '가족끼리모여' 결합 진행은 불가합니다.</strong></li>
+                    </ul>
+                </div>
+                <div id="mvnoLGUDetailsContainer" class="mt-3 hidden discount-details">
+                    <p class="font-semibold mb-1">알뜰폰 결합 상세:</p>
+                    <p>예상 인터넷 할인: <span id="detailMvnoLGUInternetDiscount" class="font-bold">0</span>원</p>
+                    <hr class="my-2 border-pink-300">
+                    <p class="text-xs mt-2 mb-1 text-pink-700 font-semibold">■ 핵심 혜택</p>
+                    <p class="text-xs mb-2">U+망 알뜰폰 이용 시 인터넷 요금을 할인해 드립니다. (휴대폰 요금 할인은 없음)</p>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 인터넷 할인액</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li>100M 인터넷 결합 시: 5,500원 할인</li>
+                        <li>500M 인터넷 결합 시: 9,900원 할인</li>
+                        <li>1G 인터넷 결합 시: 13,200원 할인</li>
+                    </ul>
+                    <p class="text-xs mt-3 mb-1 text-pink-700 font-semibold">■ 주요 조건</p>
+                    <ul class="list-disc text-xs space-y-0.5">
+                        <li>지정된 U+망 알뜰폰 통신사 및 요금제만 결합 가능</li>
+                        <li>일반 LG U+ 휴대폰과 함께 결합 가능 ('참쉬운 가족결합' 내에서 할인 적용)</li>
+                        <li><strong>알뜰폰 결합 진행 시, 꼭 LG 고객센터를 통해 결합 가능한 요금제인지 고객님이 직접 확인 후 변경이 필요합니다.</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="commissionSection" class="mb-8">
+            <h2 class="section-title">3. 수수료 정책 선택 (OTT상품용)</h2>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="input-group">
+                    <label for="commissionPolicy" class="input-label">판매수수료 선택</label>
+                    <select id="commissionPolicy" class="select-field">
+                        <option value="none">선택 안함</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section id="affiliateCardSection" class="mb-8">
+            <h2 class="section-title">4. 제휴카드 할인 선택 (선택사항)</h2>
+            <div class="bg-white p-6 rounded-lg shadow grid md:grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="affiliateCard" class="input-label">제휴카드 선택</label>
+                    <select id="affiliateCard" class="select-field">
+                        <option value="none">선택 안함</option>
+                    </select>
+                </div>
+                <div id="cardSpendingTierGroup" class="input-group hidden">
+                    <label for="cardSpendingTier" class="input-label">전월 실적 구간 선택</label>
+                    <select id="cardSpendingTier" class="select-field">
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section id="installationSection" class="mb-8">
+            <h2 class="section-title">5. 설치 옵션</h2>
+            <div class="input-group bg-white p-6 rounded-lg shadow">
+                <label class="input-label">설치 희망 시점 (설치비 변동)</label>
+                <div class="space-y-2">
+                    <label class="radio-label"><input type="radio" name="installationTime" value="weekday" class="radio-input" checked> 평일 주간</label>
+                    <label class="radio-label"><input type="radio" name="installationTime" value="weekend" class="radio-input"> 주말/야간 (할증 적용)</label>
+                </div>
+                <div class="mt-4">
+                    <label class="radio-label"><input type="checkbox" id="installationFeeSelfPay" class="radio-input"> 설치비 자체지급</label>
+                </div>
+            </div>
+        </section>
+
+        <div class="text-center mb-8">
+            <button id="calculateButton" class="btn-primary text-lg">예상 요금 계산하기</button>
+            <button id="resetButton" class="btn-secondary text-lg ml-4">초기화</button>
+        </div>
+
+        <section id="resultSection" class="hidden">
+            <h2 class="section-title">📊 계산 결과</h2>
+            
+            <div class="summary-card-main">
+                <div class="summary-column">
+                    <div class="summary-item-block">
+                        <p class="pre-discount-price"><span id="preDiscountWiredFeeEl">0</span> 원</p>
+                        <p class="summary-item-label">월 유선 요금 (결합할인 후)</p>
+                        <p class="summary-item-value"><span id="finalWiredFeeEl">0</span> 원</p>
+                    </div>
+                     <div class="summary-item-block">
+                        <p class="summary-item-label">제휴카드 할인</p>
+                        <p class="summary-item-value discount-value">- <span id="cardDiscountEl">0</span> 원</p>
+                    </div>
+                </div>
+                <div class="summary-column">
+                    <div class="summary-item-block">
+                        <p class="summary-item-label">현금 사은품</p>
+                        <p class="summary-item-value gift-value"><span id="giftAmountEl">0</span> 원</p>
+                    </div>
+                    <div class="summary-item-block">
+                        <p class="summary-item-label">휴대폰 총 할인</p>
+                        <p class="summary-item-value discount-value">- <span id="mobileDiscountEl">0</span> 원</p>
+                    </div>
+                </div>
+            </div>
+            <p id="discountReason" class="discount-reason hidden"></p>
+            
+            <div class="text-center my-4">
+                <button id="detailsToggleButton" class="btn-secondary text-sm">상세 요금 내역 전체 보기 ▼</button>
+            </div>
+
+            <div id="detailsContainer" class="hidden">
+                <div class="result-card">
+                    <h3 class="text-xl font-semibold text-pink-600 mb-3">요금 요약 (VAT 포함)</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="result-label summary-item">선택 인터넷: <span id="selectedInternet" class="result-value"></span></p>
+                            <p class="result-label summary-item">선택 U+tv (1번째): <span id="selectedTv" class="result-value"></span></p>
+                            <p class="result-label summary-item">선택 추가 U+tv (2번째): <span id="selectedAdditionalTv" class="result-value"></span></p>
+                            <p class="result-label summary-item">선택 인터넷전화: <span id="selectedPhone" class="result-value"></span></p>
+                            <p class="result-label summary-item">모바일 회선 수: <span id="selectedMobileCount" class="result-value"></span></p>
+                            <p class="result-label summary-item">적용 할인 유형: <span id="selectedDiscountType" class="result-value"></span></p>
+                        </div>
+                        <div>
+                            <p class="result-label summary-item">월 유선상품 기본료: <span id="totalBaseWiredCost" class="result-value">0</span> 원</p>
+                            <p class="result-label text-green-600 summary-item">월 총 결합 할인액: <span id="totalInternetDiscountAmount" class="result-value text-green-600">0</span> 원</p>
+                            <p class="result-label text-blue-600 summary-item">월 제휴카드 할인액: <span id="totalCardDiscountAmount" class="result-value text-blue-600">0</span> 원</p>
+                            
+                            <hr class="my-1 border-pink-300">
+                            <p class="mt-2 text-lg font-semibold">최종 예상 월 납부액 (유선상품): <span id="finalMonthlyCost" class="total-value">0</span> 원</p>
+                        </div>
+                    </div>
+
+                    <div id="mobileDiscountDetailsContainer" class="mt-6 hidden">
+                        <h4 class="text-lg font-semibold text-pink-600 mb-2 border-t pt-4">모바일 요금 할인 상세</h4>
+                        <div id="mobileDiscountResultList" class="space-y-2 text-sm"></div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3 class="text-xl font-semibold text-pink-600 mb-3">🎁 사은품 혜택 (예상 현금)</h3>
+                    <p class="result-label summary-item">현금 사은품: <span id="giftCash" class="result-value">0</span> 원</p>
+                     <p class="text-xs text-pink-500 mt-1">* 사은품 정보는 변동될 수 있으니 가입 시점에 반드시 재확인 바랍니다.</p>
+                </div>
+
+                <div class="result-card">
+                    <h3 class="text-xl font-semibold text-pink-600 mb-3">초기 설치 비용 (선택한 모든 유선 서비스 기준)</h3>
+                    <p class="result-label">예상 총 설치비: <span id="installationCostResult" class="result-value text-lg">0</span> 원</p>
+                    <p class="text-xs text-slate-500 mt-1">* 선택하신 설치 시점(평일/주말) 및 서비스 조합에 따라 계산됩니다. 프로모션으로 면제될 수 있습니다.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="messageScriptSection" class="hidden mt-12">
+            <h2 class="section-title">📄 고객 안내 문자 스크립트 (상담원 참고용)</h2>
+            <div class="result-card">
+                <h3 class="text-xl font-semibold text-pink-600 mb-3">1. 전산 메모</h3>
+                <textarea id="memoScript" class="message-script-area" readonly></textarea>
+                <div class="copy-button-container">
+                    <button onclick="copyToClipboard('memoScript', 'copyFeedbackMemo')" class="btn-secondary text-xs">복사하기</button>
+                    <span id="copyFeedbackMemo" class="copy-feedback"></span>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xl font-semibold text-pink-600">2. 상품 안내 문자</h3>
+                    <button id="generateComparisonButton" class="btn-primary text-xs py-1 px-3">⚡ 100M vs 500M 비교 스크립트 생성</button>
+                </div>
+                <textarea id="infoScript" class="message-script-area" readonly></textarea>
+                 <div class="copy-button-container">
+                    <button onclick="copyToClipboard('infoScript', 'copyFeedbackInfo')" class="btn-secondary text-xs">복사하기</button>
+                    <span id="copyFeedbackInfo" class="copy-feedback"></span>
+                </div>
+            </div>
+            <div class="result-card">
+                <h3 class="text-xl font-semibold text-pink-600 mb-3">3. 가입 완료 문자</h3>
+                <textarea id="completeScript" class="message-script-area" readonly></textarea>
+                 <div class="copy-button-container">
+                    <button onclick="copyToClipboard('completeScript', 'copyFeedbackComplete')" class="btn-secondary text-xs">복사하기</button>
+                    <span id="copyFeedbackComplete" class="copy-feedback"></span>
+                </div>
+            </div>
+            <div class="result-card">
+                <h3 class="text-xl font-semibold text-pink-600 mb-3">4. 민감정보 전송용 링크 (고객 발송용)</h3>
+                <textarea id="sensitiveInfoLinkScript" class="message-script-area" readonly></textarea>
+                <div class="copy-button-container">
+                    <button onclick="copyToClipboard('sensitiveInfoLinkScript', 'copyFeedbackSensitiveLink')" class="btn-secondary text-xs">복사하기</button>
+                    <span id="copyFeedbackSensitiveLink" class="copy-feedback"></span>
+                </div>
+            </div>
+            <div class="result-card">
+                <h3 class="text-xl font-semibold text-pink-600 mb-3">5. U+알뜰모바일 인터넷 결합 요금제 안내 (고객 발송용)</h3>
+                <textarea id="mvnoInfoScript" class="message-script-area" readonly></textarea>
+                <div class="copy-button-container">
+                    <button onclick="copyToClipboard('mvnoInfoScript', 'copyFeedbackMvnoInfo')" class="btn-secondary text-xs">복사하기</button>
+                    <span id="copyFeedbackMvnoInfo" class="copy-feedback"></span>
+                </div>
+            </div>
+
+            <!-- Moved Expert Scripts Section -->
+            <div id="expertScriptSection" class="mt-4">
+                <h3 class="text-xl font-semibold text-pink-600 mb-3 border-t pt-4 mt-6">6. 전문가용 상담 스크립트</h3>
+                <div class="result-card">
+                    <h4 class="text-lg font-semibold text-pink-600 mb-3">1. 1년 vs 3년 약정 최종 비용(TCO) 비교</h4>
+                    <div class="flex space-x-4 mb-4">
+                        <button id="generateTco100m" class="btn-primary text-sm flex-1">100Mbps 비교 스크립트 생성</button>
+                        <button id="generateTco500m" class="btn-secondary text-sm flex-1">500Mbps 비교 스크립트 생성</button>
+                    </div>
+                    <textarea id="tcoScript" class="message-script-area" readonly></textarea>
+                    <div class="copy-button-container">
+                        <button onclick="copyToClipboard('tcoScript', 'copyFeedbackTco')" class="btn-secondary text-xs">복사하기</button>
+                        <span id="copyFeedbackTco" class="copy-feedback"></span>
+                    </div>
+                </div>
+                 <div class="result-card">
+                    <h4 class="text-lg font-semibold text-pink-600 mb-3">2. LGU+ 위약금 산정 방식 상세 분석</h4>
+                    <button id="generatePenaltyScript" class="btn-primary text-sm w-full mb-4">분석 스크립트 생성</button>
+                    <textarea id="penaltyScript" class="message-script-area" readonly></textarea>
+                    <div class="copy-button-container">
+                        <button onclick="copyToClipboard('penaltyScript', 'copyFeedbackPenalty')" class="btn-secondary text-xs">복사하기</button>
+                        <span id="copyFeedbackPenalty" class="copy-feedback"></span>
+                    </div>
+                </div>
+                 <div class="result-card">
+                    <h4 class="text-lg font-semibold text-pink-600 mb-3">3. 위약금 면제 조건 총정리</h4>
+                    <button id="generateWaiverScript" class="btn-primary text-sm w-full mb-4">안내 스크립트 생성</button>
+                    <textarea id="waiverScript" class="message-script-area" readonly></textarea>
+                    <div class="copy-button-container">
+                        <button onclick="copyToClipboard('waiverScript', 'copyFeedbackWaiver')" class="btn-secondary text-xs">복사하기</button>
+                        <span id="copyFeedbackWaiver" class="copy-feedback"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW: Expert Scripts Section -->
+    </main>
+
+    <footer class="text-center p-6 mt-12 bg-pink-800 text-pink-200 text-sm">
+        <p>본 계산기는 LG U+ 판매점 웨이팅 인터넷 통합접수센터에 제공합니다.</p>
+        <p>&copy; 2024 LG U+ 결합 할인 계산기. 모든 정보는 참고용입니다.</p>
+    </footer>
+
+    <script>
+        // --- Data Section ---
+        const lguMobilePlans = [
+            { "plan_name": "요금제 선택없음", "network_type": "None", "price": 0, "url": "#" },
+            { "plan_name": "5G 시그니처", "network_type": "5G", "price": 130000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/Z202205253" },
+            { "plan_name": "5G 프리미어 슈퍼", "network_type": "5G", "price": 115000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/Z202205251" },
+            { "plan_name": "5G 프리미어 플러스", "network_type": "5G", "price": 105000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/Z202205252" },
+            { "plan_name": "5G 프리미어 레귤러", "network_type": "5G", "price": 95000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000433" },
+            { "plan_name": "5G 프리미어 에센셜", "network_type": "5G", "price": 85000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000409" },
+            { "plan_name": "5G 스탠다드", "network_type": "5G", "price": 75000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000415" },
+            { "plan_name": "5G 스탠다드 에센셜", "network_type": "5G", "price": 70000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000784" },
+            { "plan_name": "추가 요금 걱정 없는 데이터 69", "network_type": "LTE", "price": 69000, "url": "https://www.lguplus.com/mobile/plan/mplan/lte-all/lte-unlimited/LPZ0000464" },
+            { "plan_name": "5G 데이터 슈퍼", "network_type": "5G", "price": 68000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000781" },
+            { "plan_name": "5G 데이터 플러스", "network_type": "5G", "price": 66000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000782" },
+            { "plan_name": "5G 데이터 레귤러", "network_type": "5G", "price": 63000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000783" },
+            { "plan_name": "5G 심플+", "network_type": "5G", "price": 61000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0002860" },
+            { "plan_name": "5G 베이직+", "network_type": "5G", "price": 59000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ1001268" },
+            { "plan_name": "5G 라이트+", "network_type": "5G", "price": 55000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000437" },
+            { "plan_name": "5G 복지 55 (복지할인 대상자)", "network_type": "5G", "price": 55000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/" },
+            { "plan_name": "5G 슬림+", "network_type": "5G", "price": 47000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ0000487" },
+            { "plan_name": "5G 라이트 청소년 (만 18세 이하)", "network_type": "5G", "price": 45000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/" },
+            { "plan_name": "5G 키즈 45 (만 12세 이하)", "network_type": "5G", "price": 45000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/" },
+            { "plan_name": "5G 키즈 39 (만 12세 이하)", "network_type": "5G", "price": 39000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/" },
+            { "plan_name": "5G 미니", "network_type": "5G", "price": 37000, "url": "https://www.lguplus.com/mobile/plan/mplan/5g-all/5g-unlimited/LPZ1000325" },
+            { "plan_name": "LTE 데이터 33", "network_type": "LTE", "price": 33000, "url": "https://www.lguplus.com/mobile/plan/mplan/lte-all/" }
+        ];
+        
+        const lguData = {
+            "company": "LG U+",
+            "internet_plans": {
+                "standalone": {
+                    "100M": { "name": "인터넷(단독) 100M", "price": 22000, "speed_mbps": 100, "type": "100M", "speed_tier": "100M" },
+                    "500M": { "name": "인터넷(단독) 500M", "price": 33000, "speed_mbps": 500, "type": "500M", "speed_tier": "500M" },
+                    "1G": { "name": "인터넷(단독) 1GB", "price": 38500, "speed_mbps": 1000, "type": "1G", "speed_tier": "1G" },
+                    "500M_OTT": { "name": "500M+OTT 6종 3년 무료 (단독)", "price": 33000, "speed_mbps": 500, "type": "500M_OTT", "isOttPlan": true, "speed_tier": "500M" },
+                    "1G_OTT": { "name": "1G+OTT 6종 3년 무료 (단독)", "price": 38500, "speed_mbps": 1000, "type": "1G_OTT", "isOttPlan": true, "speed_tier": "1G" }
+                },
+                "with_tv_base": {
+                    "100M": { "name": "인터넷 100M (TV 결합 시)", "price": 22000, "speed_mbps": 100, "type": "100M", "speed_tier": "100M" },
+                    "500M": { "name": "인터넷 500M (TV 결합 시)", "price": 27500, "speed_mbps": 500, "type": "500M", "speed_tier": "500M" },
+                    "1G": { "name": "인터넷 1GB (TV 결합 시)", "price": 33000, "speed_mbps": 1000, "type": "1G", "speed_tier": "1G" },
+                    "500M_OTT": { "name": "500M+OTT 6종 3년 무료", "price": 27500, "speed_mbps": 500, "type": "500M_OTT", "isOttPlan": true, "speed_tier": "500M" },
+                    "1G_OTT": { "name": "1G+OTT 6종 3년 무료", "price": 33000, "speed_mbps": 1000, "type": "1G_OTT", "isOttPlan": true, "speed_tier": "1G" }
+                }
+            },
+            "tv_plans": {
+                "basic_uhd4": { "name": "TV베이직 + UHD4", "channels_info": "211채널", "price": 16500, "category": "베이직" },
+                "premium_uhd4": { "name": "TV프리미엄 + UHD4", "channels_info": "254채널", "price": 20900, "category": "프리미엄" },
+                "premium_lite_uhd4": { "name": "TV프리미엄 라이트 + UHD4", "channels_info": "259채널", "price": 23100, "category": "프리미엄 라이트" },
+                "premium_disney_uhd4": { "name": "TV프리미엄 디즈니 + UHD4", "price": 29000, "notes": "STB assumed as UHD4 if not specified", "category": "프리미엄 디즈니" },
+                "premium_netflix_hd_uhd4": { "name": "TV프리미엄 넷플릭스 HD + UHD4", "price": 32200, "notes": "STB assumed as UHD4 if not specified", "category": "프리미엄 넷플릭스 HD" },
+                "premium_netflix_uhd_uhd4": { "name": "TV프리미엄 넷플릭스 UHD + UHD4", "price": 35700, "notes": "STB assumed as UHD4 if not specified", "category": "프리미엄 넷플릭스 UHD" }
+            },
+            "phone_plans": {
+                "voip_own_device": { "name": "인터넷 전화(070) - 단말기 보유", "price": 3300 },
+                "voip_rental_device": { "name": "인터넷 전화 (070) - 단말기 임대", "price": 5562 }
+            },
+            "wifi_router": {
+                "standard": { "name": "공유기", "price": 0, "notes": "일반적으로 인터넷 요금제에 포함" }
+            },
+            "additional_tv_options": {
+                "basic_uhd4_add": { "name": "TV 추가 베이직 + UHD4", "channels_info": "211채널", "price": 11550 },
+                "basic_advanced_stb_for_100m_internet_add": { "name": "TV 추가 베이직(고급형) / 100mb 인터넷 시", "price": 10450, "condition": "100mb 인터넷 이용 시" },
+                "premium_uhd4_add": { "name": "TV 추가 프리미엄(UHD4)", "price": 13750 }
+            },
+            "bundle_discounts_on_internet": {
+                "with_tv": {
+                    "100M": { "cham_family": { "discount": 5500 }, "internet_family_all_together": { "discount": 5500 } },
+                    "500M": { "cham_family": { "discount": 9900 }, "internet_family_all_together": { "discount": 5500 }, "together_bundle": { "discount": 11000 } },
+                    "1G": { "cham_family": { "discount": 13200 }, "internet_family_all_together": { "discount": 5500 }, "together_bundle": { "discount": 11000 } }
+                },
+                "standalone_internet": {
+                    "100M": { "cham_family": { "discount": 5500 }, "internet_family_all_together": { "discount": 5500 } },
+                    "500M": { "cham_family": { "discount": 9900 }, "internet_family_all_together": { "discount": 5500 }, "together_bundle": { "discount": 11000 } },
+                    "1G": { "cham_family": { "discount": 13200 }, "internet_family_all_together": { "discount": 5500 }, "together_bundle": { "discount": 11000 } }
+                }
+            },
+            "mobile_discounts": {
+                "cham_family": [
+                    { "lines": [2], "tiers": { "under_47k": 2200, "under_69k": 3300, "over_69k": 5500 } },
+                    { "lines": [3], "tiers": { "under_47k": 3300, "under_69k": 5500, "over_69k": 7700 } },
+                    { "lines": [4, 5, 6, 7, 8, 9, 10], "tiers": { "under_47k": 4400, "under_69k": 7700, "over_69k": 11000 } }
+                ],
+                "together_bundle": [
+                    { "lines": [2], "discount_per_line": 10000 },
+                    { "lines": [3], "discount_per_line": 14000 },
+                    { "lines": [4, 5], "discount_per_line": 20000 }
+                ]
+            }
+        };
+        const giftTableLGU = { "100M단독": { cash: 200000 }, "500M단독": { cash: 230000 }, "1G단독": { cash: 230000 }, "100M번들": { cash: 400000 }, "500M번들": { cash: 470000 }, "1G번들": { cash: 470000 } };
+        const commissionDataLG = {
+          "internet_tv": {
+            "description": "LG U+ 인터넷 + TV 결합 상품 정책 (OTT 6종 3년 무료 혜택 제공)",
+            "general_notes": [
+              "1기가 인터넷 접수 시 판매자 수수료에 10,000원 추가"
+            ],
+            "commission_rules": [
+              { "commission": 80000, "support_money_min": 350000, "support_money_max": 400000, "plan_tier": "premium", "plan_names": "U+tv 프리미엄", "notes": [] },
+              { "commission": 70000, "support_money_min": 350000, "support_money_max": 400000, "plan_tier": "basic", "plan_names": "U+tv 베이직", "notes": [] },
+              { "commission": 70000, "support_money_min": 410000, "support_money_max": 440000, "plan_tier": "premium", "plan_names": "U+tv 프리미엄", "notes": ["지원금 430,000원까지는 OTT 혜택 제공 가능", "지원금 440,000원부터는 OTT 포함 시 수수료 10,000원 차감"] },
+              { "commission": 60000, "support_money_min": 410000, "support_money_max": 440000, "plan_tier": "basic", "plan_names": "U+tv 베이직", "notes": ["지원금 430,000원까지는 OTT 혜택 제공 가능", "지원금 440,000원부터는 OTT 포함 시 수수료 10,000원 차감"] },
+              { "commission": 60000, "support_money_min": 450000, "support_money_max": 500000, "plan_tier": "premium", "plan_names": "U+tv 프리미엄", "notes": ["기본적으로 OTT 혜택 미포함", "OTT 포함 시 수수료 10,000원 차감"] },
+              { "commission": 30000, "support_money_min": 450000, "support_money_max": 500000, "plan_tier": "basic", "plan_names": "U+tv 베이직", "notes": ["기본적으로 OTT 혜택 미포함", "OTT 포함 시 수수료 10,000원 차감"] },
+              { "commission": 30000, "support_money_min": 510000, "support_money_max": 550000, "plan_tier": "premium", "plan_names": "U+tv 프리미엄", "notes": ["기본적으로 OTT 혜택 미포함", "OTT 포함 시 수수료 10,000원 차감"] },
+              { "commission": 20000, "support_money_min": 510000, "support_money_max": 550000, "plan_tier": "basic", "plan_names": "U+tv 베이직", "notes": ["기본적으로 OTT 혜택 미포함", "OTT 포함 시 수수료 10,000원 차감"] }
+            ]
+          },
+          "internet_only": {
+            "description": "LG U+ 인터넷 단독 상품 정책 (500메가 기준, OTT 6종 3년 무료 혜택 제공)",
+            "general_notes": [],
+            "commission_rules": [
+              { "commission": 60000, "support_money": 170000, "payout_method": "전액 현금" },
+              { "commission": 30000, "support_money_min": 200000, "support_money_max": 250000, "payout_method": "전액 현금" }
+            ]
+          }
+        };
+
+        const mvnoBundleConfigFallback = { internetDiscount: { "100M": 5500, "500M": 9900, "1G": 13200 } };
+        const installationFeeRules = {
+            "weekday": [
+              { "service_combination": "인터넷", "fee": 36300 },
+              { "service_combination": "인터넷 + 일반전화", "fee": 36300 },
+              { "service_combination": "인터넷 + 인터넷전화", "fee": 36300 },
+              { "service_combination": "인터넷 + TV", "fee": 56100 },
+              { "service_combination": "인터넷 + TV + 일반/070전화", "fee": 56100 },
+              { "service_combination": "인터넷 + TV + TV추가", "fee": 78100 }
+            ],
+            "weekend": [
+              { "service_combination": "인터넷", "fee": 45375 },
+              { "service_combination": "인터넷 + 일반전화", "fee": 45375 },
+              { "service_combination": "인터넷 + 인터넷전화", "fee": 45375 },
+              { "service_combination": "인터넷 + TV", "fee": 70125 },
+              { "service_combination": "인터넷 + TV + 일반/070전화", "fee": 70125 },
+              { "service_combination": "인터넷 + TV + TV추가", "fee": 97625 }
+            ]
+        };
+        const affiliateCardData = {
+            "woori": {
+                "cardName": "우리카드", "phone": "1800-1111",
+                "tiers": [
+                    { "spending": 400000, "label": "40만원 이상", "discount": 25000 },
+                    { "spending": 800000, "label": "80만원 이상", "discount": 26000 }
+                ]
+            },
+            "shinhan": {
+                "cardName": "신한카드", "phone": "1544-7000",
+                "tiers": [
+                    { "spending": 400000, "label": "40만원 이상", "discount": 21000 },
+                    { "spending": 800000, "label": "80만원 이상", "discount": 23000 }
+                ]
+            },
+            "lotte": {
+                "cardName": "롯데카드", "phone": "1588-8100",
+                "tiers": [
+                    { "spending": 300000, "label": "30만원 이상", "discount": 18000 },
+                    { "spending": 700000, "label": "70만원 이상", "discount": 19000 }
+                ]
+            },
+            "nh": {
+                "cardName": "농협카드", "phone": "1644-4000",
+                "tiers": [
+                    { "spending": 300000, "label": "30만원 이상", "discount": 18000 },
+                    { "spending": 700000, "label": "70만원 이상", "discount": 24000 }
+                ]
+            },
+            "samsung": {
+                "cardName": "삼성카드", "phone": "1588-8700",
+                "tiers": [
+                    { "spending": 300000, "label": "30만원 이상", "discount": 20000 },
+                    { "spending": 700000, "label": "70만원 이상", "discount": 21000 }
+                ]
+            },
+            "hyundai": {
+                "cardName": "현대카드", "phone": "1577-6000",
+                "tiers": [
+                    { "spending": 500000, "label": "50만원 이상", "discount": 30000 },
+                    { "spending": 1000000, "label": "100만원 이상", "discount": 35000 }
+                ]
+            }
+        };
+
+        const tcoData = {
+            "100M": { "lgu": { "name": "LGU+", "oneYearFee": 34100, "oneYearTCO13": 443300, "oneYearTCO18": 613800, "threeYearFee": 16500, "threeYearGift": 200000, "threeYearTCO13": 189552, "threeYearTCO18": 323077 } },
+            "500M": { "lgu": { "name": "LGU+", "oneYearFee": 46200, "oneYearTCO13": 600600, "oneYearTCO18": 831600, "threeYearFee": 23100, "threeYearGift": 230000, "threeYearTCO13": 358000, "threeYearTCO18": 542800 } }
+        };
+
+        const penaltyAnalysisData = {
+            text: `LGU+ 위약금 상세 분석\n\n■ LGU+ 위약금 산정 방식 (신규 체계)\nLG유플러스는 KT와 달리 구간별로 정해진 '할인반환율'을 적용하여 월별 위약금을 계산한 뒤, 이를 모두 합산하는 누적 방식을 사용합니다.\n\n■ 할인반환금 공식\n∑ (월할인액 × 해당구간개월수 × 구간별할인반환율)\n\n■ 구간별 할인반환율 (3년 약정, TV프리미엄+500M 기준)\n- 기본 월 할인액: ₩20,900\n- 1~9개월: 85%\n- 10~12개월: 80%\n- 13~18개월: 30%\n- 19~21개월: 25%\n- 22~24개월: 0%\n\n■ 시나리오 모델링 (신규 체계 공식 적용)\n1) 13개월 사용 후 해지:\n- 1~9개월분: ₩20,900 × 9개월 × 0.85 = ₩159,885\n- 10~12개월분: ₩20,900 × 3개월 × 0.80 = ₩50,160\n- 13개월차분: ₩20,900 × 1개월 × 0.30 = ₩6,270\n- 최종 위약금: ₩216,315\n\n2) 18개월 사용 후 해지:\n- 1~12개월분 합계: ₩210,045\n- 13~18개월분: ₩20,900 × 6개월 × 0.30 = ₩37,620\n- 최종 위약금: ₩247,665\n\n3) 24개월 사용 후 해지:\n- 1~18개월분 합계: ₩247,665\n- 19~21개월분: ₩20,900 × 3개월 × 0.25 = ₩15,675\n- 22~24개월분: ₩20,900 × 3개월 × 0.00 = ₩0\n- 최종 위약금: ₩263,340`
+        };
+
+        const waiverConditionsData = {
+            text: `[상세 안내] 위약금 면제 조건 총정리\n\n안녕하세요 고객님, 3년 약정 부담을 덜어드리기 위해 약정 기간 중 피치 못할 사정으로 해지하시더라도 위약금(할인반환금)이 면제되는 공식적인 경우를 안내해 드립니다.\n\n■ 위약금 면제 가능 주요 사유\n1. 설치 장소의 서비스 불가\n   - 이사 간 곳이 U+ 인터넷 서비스가 불가능한 지역인 경우 (증빙서류 필요)\n2. 가입자 사망\n   - 명의자 사망 시 (증빙서류 필요)\n3. 군 입대\n   - 명의자가 현역으로 입대하는 경우 (입영통지서 등 증빙서류 필요)\n\n■ 참고사항\n- 위 조건에 해당하더라도 증빙서류 제출이 필수적입니다.\n- 자세한 기준과 필요 서류는 상황에 따라 달라질 수 있으므로, 해지 시점에 U+ 고객센터(101번)를 통해 반드시 최종 확인이 필요합니다.\n\n이처럼 부득이한 경우에는 '안전장치'가 마련되어 있으니, 너무 걱정하지 않으셔도 괜찮습니다.`
+        };
+
+        // --- DOM Element References ---
+        const vatToggle = document.getElementById('vatToggle');
+        const internetTypeRadios = document.querySelectorAll('input[name="internetType"]');
+        const internetPlanEl = document.getElementById('internetPlan');
+        const tvPlanEl = document.getElementById('tvPlan');
+        const additionalTvPlanEl = document.getElementById('additionalTvPlan');
+        const phonePlanEl = document.getElementById('phonePlan');
+        const mobileLinesCountEl = document.getElementById('mobileLinesCount');
+        const mobileLinesContainerEl = document.getElementById('mobileLinesContainer');
+        const discountTypeRadios = document.querySelectorAll('input[name="discountType"]');
+        const calculateButton = document.getElementById('calculateButton');
+        const resetButton = document.getElementById('resetButton');
+        const generateComparisonButton = document.getElementById('generateComparisonButton');
+        const affiliateCardEl = document.getElementById('affiliateCard');
+        const cardSpendingTierGroupEl = document.getElementById('cardSpendingTierGroup');
+        const cardSpendingTierEl = document.getElementById('cardSpendingTier');
+        const commissionPolicyEl = document.getElementById('commissionPolicy');
+        const installationFeeSelfPayEl = document.getElementById('installationFeeSelfPay');
+
+        // Discount Details Toggles
+        const chamFamilyDetailsToggleEl = document.getElementById('chamFamilyDetailsToggle');
+        const chamFamilyDetailsContainerEl = document.getElementById('chamFamilyDetailsContainer');
+        const detailCfInternetDiscountEl = document.getElementById('detailCfInternetDiscount');
+        const detailCfMobileDiscountEl = document.getElementById('detailCfMobileDiscount');
+        const togetherDetailsToggleEl = document.getElementById('togetherDetailsToggle');
+        const togetherDetailsContainerEl = document.getElementById('togetherDetailsContainer');
+        const detailTgInternetDiscountEl = document.getElementById('detailTgInternetDiscount');
+        const detailTgMobileDiscountEl = document.getElementById('detailTgMobileDiscount');
+        const internetFamilyDetailsToggleEl = document.getElementById('internetFamilyDetailsToggle');
+        const internetFamilyDetailsContainerEl = document.getElementById('internetFamilyDetailsContainer');
+        const detailIfInternetDiscountEl = document.getElementById('detailIfInternetDiscount');
+        const mvnoLGUDetailsToggleEl = document.getElementById('mvnoLGUDetailsToggle');
+        const mvnoLGUDetailsContainerEl = document.getElementById('mvnoLGUDetailsContainer');
+        const detailMvnoLGUInternetDiscountEl = document.getElementById('detailMvnoLGUInternetDiscount');
+        
+        // Result Section Elements
+        const resultSection = document.getElementById('resultSection');
+        
+        // New Summary Card Elements
+        const preDiscountWiredFeeEl = document.getElementById('preDiscountWiredFeeEl');
+        const finalWiredFeeEl = document.getElementById('finalWiredFeeEl');
+        const cardDiscountEl = document.getElementById('cardDiscountEl');
+        const giftAmountEl = document.getElementById('giftAmountEl');
+        const mobileDiscountEl = document.getElementById('mobileDiscountEl');
+        const discountReasonEl = document.getElementById('discountReason');
+        
+        
+        // Details Section Elements
+        const detailsToggleButton = document.getElementById('detailsToggleButton');
+        const detailsContainer = document.getElementById('detailsContainer');
+        const selectedInternetEl = document.getElementById('selectedInternet');
+        const selectedTvEl = document.getElementById('selectedTv');
+        const selectedAdditionalTvEl = document.getElementById('selectedAdditionalTv');
+        const selectedPhoneEl = document.getElementById('selectedPhone');
+        const selectedMobileCountEl = document.getElementById('selectedMobileCount');
+        const selectedDiscountTypeEl = document.getElementById('selectedDiscountType');
+        const totalBaseWiredCostEl = document.getElementById('totalBaseWiredCost');
+        const totalInternetDiscountAmountEl = document.getElementById('totalInternetDiscountAmount');
+        const totalCardDiscountAmountEl = document.getElementById('totalCardDiscountAmount');
+        const finalMonthlyCostEl = document.getElementById('finalMonthlyCost');
+        const installationCostResultEl = document.getElementById('installationCostResult');
+        const giftCashEl = document.getElementById('giftCash');
+        const mobileDiscountDetailsContainerEl = document.getElementById('mobileDiscountDetailsContainer');
+        const mobileDiscountResultListEl = document.getElementById('mobileDiscountResultList');
+        
+        // Message Script Elements
+        const messageScriptSectionEl = document.getElementById('messageScriptSection');
+        const memoScriptEl = document.getElementById('memoScript');
+        const infoScriptEl = document.getElementById('infoScript');
+        const completeScriptEl = document.getElementById('completeScript');
+        const sensitiveInfoLinkScriptEl = document.getElementById('sensitiveInfoLinkScript');
+        const mvnoInfoScriptEl = document.getElementById('mvnoInfoScript');
+
+        // Expert Script Elements
+        const expertScriptSectionEl = document.getElementById('expertScriptSection');
+        const generateTco100mBtn = document.getElementById('generateTco100m');
+        const generateTco500mBtn = document.getElementById('generateTco500m');
+        const tcoScriptEl = document.getElementById('tcoScript');
+        const generatePenaltyBtn = document.getElementById('generatePenaltyScript');
+        const penaltyScriptEl = document.getElementById('penaltyScript');
+        const generateWaiverBtn = document.getElementById('generateWaiverScript');
+        const waiverScriptEl = document.getElementById('waiverScript');
+
+        const allDetailSectionsLGU = [
+            { radioValue: 'cham_family', toggleEl: chamFamilyDetailsToggleEl, containerEl: chamFamilyDetailsContainerEl, updateFn: updateChamFamilyDetails },
+            { radioValue: 'together_bundle', toggleEl: togetherDetailsToggleEl, containerEl: togetherDetailsContainerEl, updateFn: updateTogetherDetails },
+            { radioValue: 'internet_family_all_together', toggleEl: internetFamilyDetailsToggleEl, containerEl: internetFamilyDetailsContainerEl, updateFn: updateInternetFamilyDetails },
+            { radioValue: 'mvno_bundle', toggleEl: mvnoLGUDetailsToggleEl, containerEl: mvnoLGUDetailsContainerEl, updateFn: updateMvnoLGUDetails }
+        ];
+        
+        // --- Global State ---
+        let isVatIncluded = false;
+
+        // --- Functions ---
+        function adjustForVat(price) {
+            return isVatIncluded ? price : Math.round(price / 1.1);
+        }
+
+        function formatPrice(price) {
+            return adjustForVat(price).toLocaleString();
+        }
+
+        function resetCalculator() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            resultSection.classList.add('hidden');
+            messageScriptSectionEl.classList.add('hidden');
+            detailsContainer.classList.add('hidden');
+            detailsToggleButton.textContent = '상세 요금 내역 전체 보기 ▼';
+        
+            document.querySelector('input[name="internetType"][value="bundle"]').checked = true;
+            document.querySelector('input[name="discountType"][value="none"]').checked = true;
+            
+            // Set new defaults
+            internetPlanEl.value = '500M_OTT';
+            tvPlanEl.value = 'premium_uhd4';
+            setDefaultAffiliateCard();
+
+            vatToggle.checked = false;
+            isVatIncluded = false;
+
+            installationFeeSelfPayEl.checked = false;
+
+            document.querySelectorAll('.toggle-switch input[type="checkbox"]:not(#vatToggle)').forEach(toggle => {
+                toggle.checked = false;
+            });
+
+            allDetailSectionsLGU.forEach(section => {
+                if(section.containerEl) section.containerEl.classList.add('hidden');
+            });
+            handleInternetTypeChange();
+            updateMobileLineControls();
+            updateAllDiscountDetails();
+            populateCommissionPolicies();
+        }
+        
+        function setDefaultAffiliateCard() {
+            let bestCard = {
+                key: 'none',
+                tierIndex: -1,
+                discount: -1
+            };
+
+            // Iterate through all available affiliate cards
+            for (const cardKey in affiliateCardData) {
+                const card = affiliateCardData[cardKey];
+
+                // Find the index of the tier that requires exactly 300,000 KRW spending
+                const tierIndex = card.tiers.findIndex(t => t.spending === 300000);
+
+                // If a 300,000 KRW tier exists for this card
+                if (tierIndex !== -1) {
+                    const tier = card.tiers[tierIndex];
+
+                    // Check if this card's discount is better than the best one found so far
+                    if (tier.discount > bestCard.discount) {
+                        // If it is, update our record of the best card
+                        bestCard = {
+                            key: cardKey,
+                            tierIndex: tierIndex,
+                            discount: tier.discount
+                        };
+                    }
+                }
+            }
+
+            // Set the dropdowns to the best card and tier found
+            if (bestCard.key !== 'none') {
+                affiliateCardEl.value = bestCard.key;
+                updateCardTiers(); // This populates the tiers for the selected card
+                cardSpendingTierEl.value = bestCard.tierIndex; // This selects the correct tier
+            } else {
+                // If no card with a 300k tier was found, default to 'none'
+                affiliateCardEl.value = 'none';
+                updateCardTiers();
+            }
+        }
+
+        function updateInternetPlanDisability() {
+            const selectedDiscount = document.querySelector('input[name="discountType"]:checked').value;
+            const option100M = internetPlanEl.querySelector('option[value="100M"]');
+            if (option100M) {
+                option100M.disabled = selectedDiscount === 'together_bundle';
+            }
+        }
+        
+        function getMobileDiscount(discountType, numLines, planInputs) {
+            let totalBundleDiscount = 0;
+            let totalSelectiveDiscount = 0;
+        
+            const bundleRules = lguData.mobile_discounts[discountType];
+            const actualPlanInputs = planInputs.filter(p => p.price > 0);
+            const actualNumLines = actualPlanInputs.length;
+
+            if (actualNumLines >= 2 && bundleRules) {
+                if (discountType === 'cham_family') {
+                    const lineCountForRule = Math.min(actualNumLines, 10);
+                    const rule = bundleRules.find(r => r.lines.includes(lineCountForRule)) || bundleRules[bundleRules.length - 1];
+                    if (rule) {
+                        actualPlanInputs.forEach(input => {
+                            if (input.price >= 69000) totalBundleDiscount += rule.tiers.over_69k;
+                            else if (input.price >= 47000) totalBundleDiscount += rule.tiers.under_69k;
+                            else totalBundleDiscount += rule.tiers.under_47k;
+                        });
+                    }
+                } else if (discountType === 'together_bundle') {
+                    const lineCountForRule = Math.min(actualNumLines, 5);
+                    const rule = bundleRules.find(r => r.lines.includes(lineCountForRule)) || bundleRules[bundleRules.length - 1];
+                    if (rule) {
+                        const eligibleLines = actualPlanInputs.filter(p => p.price >= 85000).length;
+                        if (eligibleLines === actualNumLines) {
+                            totalBundleDiscount = actualNumLines * rule.discount_per_line;
+                        }
+                    }
+                }
+            }
+        
+            planInputs.forEach(input => {
+                if (input.selectiveDiscountChecked) {
+                    totalSelectiveDiscount += Math.floor(input.price * 0.25);
+                }
+            });
+        
+            return { totalBundleDiscount, totalSelectiveDiscount, total: totalBundleDiscount + totalSelectiveDiscount };
+        }
+        
+        function updateMobileLinesInputsLGU() {
+            const count = parseInt(mobileLinesCountEl.value) || 0;
+            const selectedDiscount = document.querySelector('input[name="discountType"]:checked').value;
+            mobileLinesContainerEl.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const div = document.createElement('div');
+                div.className = 'mobile-line-item';
+                const label = document.createElement('label');
+                label.htmlFor = `mobilePlan${i}`;
+                label.className = 'block text-sm font-medium text-slate-600 mb-1';
+                label.textContent = `회선 ${i + 1} 요금제 선택`;
+                const select = document.createElement('select');
+                select.id = `mobilePlan${i}`;
+                select.className = 'select-field mobile-plan-selector';
+                lguMobilePlans.forEach(plan => {
+                    const option = document.createElement('option');
+                    option.value = plan.price;
+                    option.textContent = `${plan.plan_name} (${plan.price === 0 ? '선택안함' : formatPrice(plan.price) + '원'})`;
+                    option.dataset.planName = plan.plan_name;
+                    option.dataset.url = plan.url;
+                    if (selectedDiscount === 'together_bundle' && plan.price < 85000 && plan.price !== 0) {
+                        option.disabled = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                if (selectedDiscount === 'cham_family' || selectedDiscount === 'together_bundle' || selectedDiscount === 'mvno_bundle') {
+                    select.value = "0"; // Default to "요금제 선택없음"
+                }
+
+                const checkboxLabel = document.createElement('label');
+                checkboxLabel.className = 'flex items-center mt-2 text-sm text-slate-600';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `selectiveDiscount${i}`;
+                checkbox.className = 'radio-input h-4 w-4 selective-discount-cb';
+                checkboxLabel.appendChild(checkbox);
+                checkboxLabel.append(' 선택약정 25% 할인');
+                div.appendChild(label);
+                div.appendChild(select);
+                div.appendChild(checkboxLabel);
+                mobileLinesContainerEl.appendChild(div);
+                select.addEventListener('change', updateAllDiscountDetails);
+                checkbox.addEventListener('change', updateAllDiscountDetails);
+            }
+            updateAllDiscountDetails();
+        }
+        
+        function updateAllDiscountDetails() {
+            updateChamFamilyDetails();
+            updateTogetherDetails();
+            updateInternetFamilyDetails();
+            updateMvnoLGUDetails();
+        }
+        
+        function updateChamFamilyDetails() {
+            const internetKey = internetPlanEl.value;
+            const isBundle = document.querySelector('input[name="internetType"]:checked').value === 'bundle';
+            const numMobileLines = parseInt(mobileLinesCountEl.value) || 0;
+            let internetDiscount = 0;
+            if (internetKey !== 'none' && numMobileLines > 0) {
+                internetDiscount = getDiscountFromBundle(internetKey, "cham_family", isBundle, numMobileLines);
+            }
+            detailCfInternetDiscountEl.textContent = formatPrice(internetDiscount);
+            const planInputs = Array.from(document.querySelectorAll('.mobile-line-item')).map(item => ({
+                price: parseInt(item.querySelector('.mobile-plan-selector').value),
+                selectiveDiscountChecked: item.querySelector('.selective-discount-cb').checked
+            }));
+            const mobileDiscount = getMobileDiscount('cham_family', numMobileLines, planInputs);
+            detailCfMobileDiscountEl.textContent = formatPrice(mobileDiscount.total);
+        }
+        
+        function updateTogetherDetails() {
+            const internetKey = internetPlanEl.value;
+            const isBundle = document.querySelector('input[name="internetType"]:checked').value === 'bundle';
+            const numMobileLines = parseInt(mobileLinesCountEl.value) || 0;
+            let internetDiscount = 0;
+            if (internetKey !== 'none') {
+                internetDiscount = getDiscountFromBundle(internetKey, "together_bundle", isBundle, numMobileLines);
+            }
+            detailTgInternetDiscountEl.textContent = formatPrice(internetDiscount);
+            const planInputs = Array.from(document.querySelectorAll('.mobile-line-item')).map(item => ({
+                price: parseInt(item.querySelector('.mobile-plan-selector').value),
+                selectiveDiscountChecked: item.querySelector('.selective-discount-cb').checked
+            }));
+            const mobileDiscount = getMobileDiscount('together_bundle', numMobileLines, planInputs);
+            detailTgMobileDiscountEl.textContent = formatPrice(mobileDiscount.total);
+        }
+        
+        function updateInternetFamilyDetails() {
+            const internetKey = internetPlanEl.value;
+            let internetDiscount = 0;
+            const isBundle = document.querySelector('input[name="internetType"]:checked').value === 'bundle';
+            if (internetKey !== 'none') {
+                 internetDiscount = getDiscountFromBundle(internetKey, "internet_family_all_together", isBundle, parseInt(mobileLinesCountEl.value) || 0);
+            }
+            detailIfInternetDiscountEl.textContent = formatPrice(internetDiscount);
+        }
+        
+        function updateMvnoLGUDetails() {
+            const internetKey = internetPlanEl.value;
+            let internetDiscount = 0;
+            if (internetKey !== 'none' && (parseInt(mobileLinesCountEl.value) || 0) > 0) {
+                const currentInternetDetails = getInternetPlanInfo(internetKey, document.querySelector('input[name="internetType"]:checked').value === 'bundle');
+                const internetType = currentInternetDetails.type;
+                if (internetType && mvnoBundleConfigFallback.internetDiscount[internetType]) {
+                    internetDiscount = mvnoBundleConfigFallback.internetDiscount[internetType];
+                }
+            }
+            detailMvnoLGUInternetDiscountEl.textContent = formatPrice(internetDiscount);
+        }
+        
+        function populateSelectWithOptionsGeneric(selectElement, dataObject, defaultKey = "none", nameKey = "name", priceKey = "price") {
+            const currentValue = selectElement.value;
+            selectElement.innerHTML = `<option value="none">선택 안함</option>`;
+            for (const key in dataObject) {
+                const item = dataObject[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${item[nameKey]} (월 ${formatPrice(item[priceKey])}원)`;
+                option.dataset.price = item[priceKey];
+                if (item.speed_mbps) option.dataset.speed = item.speed_mbps;
+                if (item.type) option.dataset.type = item.type;
+                if (item.channels_info) option.dataset.channels = item.channels_info;
+                if (item.category) option.dataset.category = item.category;
+                selectElement.appendChild(option);
+            }
+            if (selectElement.querySelector(`option[value="${currentValue}"]`)) {
+                selectElement.value = currentValue;
+            } else if (defaultKey !== "none" && dataObject[defaultKey]) {
+                selectElement.value = defaultKey;
+            } else if (defaultKey === "none" && selectElement.options.length > 0) {
+                selectElement.value = "none";
+            }
+        }
+        
+        function populateInternetPlans(isBundle) {
+            internetPlanEl.innerHTML = `<option value="none">선택 안함</option>`;
+            const plansToShow = isBundle ? lguData.internet_plans.with_tv_base : lguData.internet_plans.standalone;
+            const notesEl = document.getElementById('internetNotes');
+            for (const key in plansToShow) {
+                const item = plansToShow[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${item.name} (월 ${formatPrice(item.price)}원)`;
+                option.dataset.price = item.price;
+                option.dataset.speed = item.speed_mbps;
+                option.dataset.type = item.type;
+                option.dataset.isOttPlan = item.isOttPlan || false;
+                internetPlanEl.appendChild(option);
+            }
+            internetPlanEl.value = "500M_OTT";
+            if (notesEl) {
+                notesEl.textContent = isBundle ? "참고: WiFi 공유기 포함. TV 결합 시 기본 할인된 요금입니다." : "참고: WiFi 공유기 포함.";
+            }
+            updateInternetPlanDisability();
+            handleInternetPlanChange();
+        }
+
+        function handleInternetPlanChange() {
+            const selectedOption = internetPlanEl.options[internetPlanEl.selectedIndex];
+            const isOtt = selectedOption.dataset.isOttPlan === 'true';
+            commissionPolicyEl.disabled = !isOtt;
+            if (!isOtt) {
+                commissionPolicyEl.value = 'none';
+            }
+        }
+        
+        function handleInternetTypeChange() {
+            const selectedType = document.querySelector('input[name="internetType"]:checked').value;
+            const isBundle = selectedType === 'bundle';
+            populateInternetPlans(isBundle);
+            tvPlanEl.disabled = !isBundle;
+            additionalTvPlanEl.disabled = !isBundle;
+            if (!isBundle) {
+                tvPlanEl.value = 'none';
+                additionalTvPlanEl.value = 'none';
+            } else {
+                if (tvPlanEl.value === 'none') {
+                     tvPlanEl.value = 'premium_uhd4';
+                }
+            }
+            handleTvPlanChange();
+        }
+        
+        function handleTvPlanChange() {
+            const isFirstTvSelected = tvPlanEl.value !== 'none';
+            const isBundleType = document.querySelector('input[name="internetType"]:checked').value === 'bundle';
+            additionalTvPlanEl.disabled = !isFirstTvSelected || !isBundleType;
+            if (!isFirstTvSelected || !isBundleType) {
+                additionalTvPlanEl.value = 'none';
+            }
+        }
+        
+        function updateMobileLineControls() {
+            const selectedDiscount = document.querySelector('input[name="discountType"]:checked').value;
+            let mobileCount = 0;
+            let isMobileDisabled = true;
+            switch (selectedDiscount) {
+                case 'none': mobileCount = 0; isMobileDisabled = true; break;
+                case 'cham_family': mobileCount = 1; isMobileDisabled = false; break;
+                case 'together_bundle': mobileCount = 1; isMobileDisabled = false; break;
+                case 'internet_family_all_together': mobileCount = 0; isMobileDisabled = true; break;
+                case 'mvno_bundle': mobileCount = 1; isMobileDisabled = false; break;
+                default: mobileCount = 0; isMobileDisabled = true;
+            }
+            mobileLinesCountEl.value = mobileCount;
+            mobileLinesCountEl.disabled = isMobileDisabled;
+            updateMobileLinesInputsLGU();
+        }
+
+        function populateAffiliateCards() {
+            for (const key in affiliateCardData) {
+                const card = affiliateCardData[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = card.cardName;
+                affiliateCardEl.appendChild(option);
+            }
+        }
+
+        function updateCardTiers() {
+            const selectedCardKey = affiliateCardEl.value;
+            cardSpendingTierEl.innerHTML = '';
+            if (selectedCardKey === 'none') {
+                cardSpendingTierGroupEl.classList.add('hidden');
+                return;
+            }
+            const card = affiliateCardData[selectedCardKey];
+            card.tiers.forEach((tier, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = tier.label;
+                cardSpendingTierEl.appendChild(option);
+            });
+            cardSpendingTierGroupEl.classList.remove('hidden');
+        }
+
+        function populateCommissionPolicies() {
+            commissionPolicyEl.innerHTML = '<option value="none">선택 안함</option>';
+            // Create a set of unique commission values from the rules
+            const uniqueCommissions = [...new Set(commissionDataLG.internet_tv.commission_rules.map(rule => rule.commission))];
+            // Sort the unique values in descending order for a better user experience
+            uniqueCommissions.sort((a, b) => b - a);
+            // Populate the dropdown with the unique, sorted commission values
+            uniqueCommissions.forEach(commission => {
+                const option = document.createElement('option');
+                option.value = commission;
+                option.textContent = `수수료 ${commission.toLocaleString()}원`;
+                commissionPolicyEl.appendChild(option);
+            });
+        }
+        
+        function initializeCalculator() {
+            populateSelectWithOptionsGeneric(tvPlanEl, lguData.tv_plans);
+            populateSelectWithOptionsGeneric(additionalTvPlanEl, lguData.additional_tv_options, "none", "name", "price");
+            populateSelectWithOptionsGeneric(phonePlanEl, lguData.phone_plans, "none");
+            populateAffiliateCards();
+            populateCommissionPolicies();
+        
+            vatToggle.addEventListener('change', () => {
+                isVatIncluded = vatToggle.checked;
+                // Re-populate all selects to update prices
+                handleInternetTypeChange();
+                populateSelectWithOptionsGeneric(tvPlanEl, lguData.tv_plans, tvPlanEl.value);
+                populateSelectWithOptionsGeneric(additionalTvPlanEl, lguData.additional_tv_options, additionalTvPlanEl.value, "name", "price");
+                populateSelectWithOptionsGeneric(phonePlanEl, lguData.phone_plans, phonePlanEl.value);
+                updateMobileLinesInputsLGU();
+                // If results are visible, recalculate
+                if (!resultSection.classList.contains('hidden')) {
+                    calculateAndDisplayResultsLGU();
+                }
+            });
+
+            internetTypeRadios.forEach(radio => radio.addEventListener('change', handleInternetTypeChange));
+            tvPlanEl.addEventListener('change', handleTvPlanChange);
+            internetPlanEl.addEventListener('change', () => {
+                manageInternetAndDiscountCompatibility();
+                handleInternetPlanChange();
+                updateAllDiscountDetails();
+            });
+            mobileLinesCountEl.addEventListener('input', updateMobileLinesInputsLGU);
+            affiliateCardEl.addEventListener('change', updateCardTiers);
+            calculateButton.addEventListener('click', calculateAndDisplayResultsLGU);
+            resetButton.addEventListener('click', resetCalculator);
+            generateComparisonButton.addEventListener('click', generateComparisonScript);
+            
+            // Expert script button listeners
+            generateTco100mBtn.addEventListener('click', () => generateTCOComparisonScript('100M'));
+            generateTco500mBtn.addEventListener('click', () => generateTCOComparisonScript('500M'));
+            generatePenaltyBtn.addEventListener('click', generatePenaltyAnalysisScript);
+            generateWaiverBtn.addEventListener('click', generateWaiverScript);
+
+            discountTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'together_bundle' && internetPlanEl.value === '100M') {
+                        internetPlanEl.value = '500M';
+                        internetPlanEl.dispatchEvent(new Event('change'));
+                    }
+                    manageInternetAndDiscountCompatibility();
+                    updateMobileLineControls();
+                    allDetailSectionsLGU.forEach(section => {
+                        if (section.radioValue !== this.value) {
+                            section.containerEl.classList.add('hidden');
+                            section.toggleEl.checked = false;
+                        }
+                    });
+                    updateAllDiscountDetails();
+                });
+            });
+        
+            allDetailSectionsLGU.forEach(section => {
+                section.toggleEl.addEventListener('change', function() {
+                    const radio = document.querySelector(`input[name="discountType"][value="${section.radioValue}"]`);
+                    if (radio.checked) {
+                        section.containerEl.classList.toggle('hidden', !this.checked);
+                        if (this.checked) updateAllDiscountDetails();
+                    }
+                });
+            });
+        
+            detailsToggleButton.addEventListener('click', () => {
+                const isHidden = detailsContainer.classList.toggle('hidden');
+                detailsToggleButton.textContent = isHidden ? '상세 요금 내역 전체 보기 ▼' : '상세 내역 닫기 ▲';
+            });
+            
+            resetCalculator();
+        }
+        
+        function getInternetPlanInfo(internetKey, isBundleInternetType) {
+            if (!internetKey || internetKey === "none") return { name: "미선택", price: 0, speed_mbps: 0, type: "none" };
+            const planDataSource = isBundleInternetType ? lguData.internet_plans.with_tv_base : lguData.internet_plans.standalone;
+            const plan = planDataSource[internetKey] || lguData.internet_plans.standalone[internetKey];
+            return plan ? { ...plan } : { name: "오류", price: 0, speed_mbps: 0, type: "none" };
+        }
+        
+        function getDiscountFromBundle(internetTypeKey, discountTypeKeyFromJson, isBundleInternetType, numMobileLines) {
+            if (discountTypeKeyFromJson === "none") return 0;
+
+            const internetPlanDetails = getInternetPlanInfo(internetTypeKey, isBundleInternetType);
+            if (!internetPlanDetails || !internetPlanDetails.speed_tier) return 0;
+            const internetSpeedType = internetPlanDetails.speed_tier;
+
+            const category = isBundleInternetType ? "with_tv" : "standalone_internet";
+            const discountsForCategory = lguData.bundle_discounts_on_internet[category];
+
+            if (discountsForCategory?.[internetSpeedType]?.[discountTypeKeyFromJson]) {
+                if (discountTypeKeyFromJson === "together_bundle") {
+                    const internetSpeedMbps = internetPlanDetails.speed_mbps || 0;
+                    const mobilePlanPrices = Array.from(document.querySelectorAll('.mobile-plan-selector')).map(s => parseInt(s.value));
+                    const highTierMobileCount = mobilePlanPrices.filter(p => p >= 85000).length;
+                    
+                    if (internetSpeedMbps >= 500 && highTierMobileCount === numMobileLines && numMobileLines >= 1) {
+                        return discountsForCategory[internetSpeedType][discountTypeKeyFromJson].discount;
+                    }
+                    return 0;
+                } else if (discountTypeKeyFromJson === "cham_family") {
+                    return numMobileLines > 0 ? discountsForCategory[internetSpeedType][discountTypeKeyFromJson].discount : 0;
+                }
+                return discountsForCategory[internetSpeedType][discountTypeKeyFromJson].discount;
+            }
+            return 0;
+        }
+
+        function calculatePlanDetails(forcedInternetKey) {
+            // --- 1. Get User Inputs ---
+            const selectedInternetTypeValue = document.querySelector('input[name="internetType"]:checked').value;
+            const isBundleInternetType = selectedInternetTypeValue === 'bundle';
+            const internetKey = forcedInternetKey || internetPlanEl.value;
+            const tvKey = isBundleInternetType ? tvPlanEl.value : 'none';
+            const additionalTvKey = isBundleInternetType ? additionalTvPlanEl.value : 'none';
+            const phoneKey = phonePlanEl.value;
+            const numMobileLines = parseInt(mobileLinesCountEl.value) || 0;
+            const selectedDiscountRadio = document.querySelector('input[name="discountType"]:checked');
+            const selectedDiscountRadioValue = selectedDiscountRadio.value;
+            const selectedDiscountRadioLabel = selectedDiscountRadio.closest('label').textContent.trim();
+            const installationTime = document.querySelector('input[name="installationTime"]:checked').value;
+            const selectedCardKey = affiliateCardEl.value;
+            const selectedCardTierIndex = cardSpendingTierEl.value;
+            const commissionPolicyIndex = commissionPolicyEl.value;
+            const isInstallationFeeSelfPay = installationFeeSelfPayEl.checked;
+        
+            // --- 2. Calculate Wired Costs and Discounts ---
+            const currentInternetDetails = getInternetPlanInfo(internetKey, isBundleInternetType);
+            const internetBasePrice = currentInternetDetails.price;
+            let totalActualInternetDiscount = 0;
+            if (internetKey !== 'none' && selectedDiscountRadioValue !== "none") {
+                 const internetSpeedTypeForDiscount = currentInternetDetails.type.includes('OTT') ? currentInternetDetails.type.split('_')[0] : currentInternetDetails.type;
+                if (selectedDiscountRadioValue === "mvno_bundle") {
+                    if (numMobileLines > 0 && internetSpeedTypeForDiscount && mvnoBundleConfigFallback.internetDiscount[internetSpeedTypeForDiscount]) {
+                        totalActualInternetDiscount = mvnoBundleConfigFallback.internetDiscount[internetSpeedTypeForDiscount];
+                    }
+                } else {
+                    totalActualInternetDiscount = getDiscountFromBundle(internetKey, selectedDiscountRadioValue, isBundleInternetType, numMobileLines);
+                }
+            }
+            totalActualInternetDiscount = Math.min(totalActualInternetDiscount, internetBasePrice);
+            
+            const tvBase = (isBundleInternetType && tvKey !== 'none' && lguData.tv_plans[tvKey]) ? lguData.tv_plans[tvKey].price : 0;
+            const finalAdditionalTvCost = (isBundleInternetType && additionalTvKey !== 'none' && lguData.additional_tv_options[additionalTvKey]) ? lguData.additional_tv_options[additionalTvKey].price : 0;
+            const phoneBase = (phoneKey !== 'none' && lguData.phone_plans[phoneKey]) ? lguData.phone_plans[phoneKey].price : 0;
+            
+            const preDiscountWiredCost = internetBasePrice + tvBase + finalAdditionalTvCost + phoneBase;
+            const finalWiredMonthlyCost = preDiscountWiredCost - totalActualInternetDiscount;
+
+            // --- 3. Card Discount ---
+            let cardDiscountAmount = 0;
+            let selectedCardInfo = null;
+            if (selectedCardKey !== 'none' && affiliateCardData[selectedCardKey]) {
+                const card = affiliateCardData[selectedCardKey];
+                const tier = card.tiers[selectedCardTierIndex];
+                if (tier) {
+                    cardDiscountAmount = tier.discount;
+                    selectedCardInfo = { ...card, selectedTier: tier };
+                }
+            }
+            const finalCostAfterCard = finalWiredMonthlyCost - cardDiscountAmount;
+        
+            // --- 4. Mobile Discounts ---
+            const planInputs = Array.from(document.querySelectorAll('.mobile-line-item')).map(item => ({
+                price: parseInt(item.querySelector('.mobile-plan-selector').value),
+                selectiveDiscountChecked: item.querySelector('.selective-discount-cb').checked
+            }));
+            const mobileDiscounts = getMobileDiscount(selectedDiscountRadioValue, numMobileLines, planInputs);
+            
+            // --- 5. Other Benefits (Gift & Installation) ---
+            let giftCashAmount = 0;
+            if (internetKey !== 'none') {
+                const isOttPlan = currentInternetDetails.isOttPlan;
+                const selectedCommissionValue = parseInt(commissionPolicyEl.value, 10);
+
+                if (isOttPlan && !isNaN(selectedCommissionValue)) {
+                    // Determine TV plan tier ('premium' or 'basic')
+                    const tvPlanKey = tvPlanEl.value;
+                    const tvPlanDetails = tvPlanKey !== 'none' ? lguData.tv_plans[tvPlanKey] : null;
+                    const tvTier = (tvPlanDetails && tvPlanDetails.category === '베이직') ? 'basic' : 'premium';
+
+                    // Find the matching commission rule
+                    const rule = commissionDataLG.internet_tv.commission_rules.find(r =>
+                        r.commission === selectedCommissionValue && r.plan_tier === tvTier
+                    );
+
+                    if (rule) {
+                        giftCashAmount = rule.support_money_max || 0;
+                    }
+                } else if (!isOttPlan) {
+                    const giftKeyForCalc = currentInternetDetails.type + (isBundleInternetType ? "번들" : "단독");
+                    if (giftTableLGU[giftKeyForCalc]) {
+                        giftCashAmount = giftTableLGU[giftKeyForCalc].cash;
+                    }
+                }
+            }
+
+            let calculatedInstallationFee = 0;
+            const installType = installationTime === 'weekday' ? 'weekday' : 'weekend';
+            const serviceString = getInstallationServiceString(internetKey !== 'none', tvBase > 0, phoneBase > 0, finalAdditionalTvCost > 0);
+            if (serviceString) {
+                const rulesForDay = installationFeeRules[installType];
+                const rule = rulesForDay.find(r => r.service_combination === serviceString);
+                if (rule) calculatedInstallationFee = rule.fee;
+            }
+
+            let installationFeeSupportAmount = isInstallationFeeSelfPay ? calculatedInstallationFee : 0;
+
+            let productDescriptionForScript = `\n[유선 상품]`;
+            if (currentInternetDetails && currentInternetDetails.name) {
+                 productDescriptionForScript += `\n▶️ ${currentInternetDetails.name}`;
+                 if(currentInternetDetails.isOttPlan) {
+                     productDescriptionForScript += `\n▶️ 종합OTT6종 3년간 무상지원(넷플릭스/티빙/디즈니플러스/웨이브/쿠팡플레이/지상파다시보기/총70만원상당)`;
+                 }
+            } else {
+                productDescriptionForScript += `\n▶️ 인터넷 미선택`;
+            }
+
+            if (tvBase > 0 && lguData.tv_plans[tvKey]) {
+                productDescriptionForScript += `\n▶️ ${lguData.tv_plans[tvKey].name}`;
+            } else {
+                productDescriptionForScript += `\n▶️ TV 미선택`;
+            }
+             if (finalAdditionalTvCost > 0 && lguData.additional_tv_options[additionalTvKey]) {
+                productDescriptionForScript += `\n▶️ (추가) ${lguData.additional_tv_options[additionalTvKey].name}`;
+            }
+
+            if (phoneBase > 0 && lguData.phone_plans[phoneKey]) {
+                productDescriptionForScript += `\n▶️ ${lguData.phone_plans[phoneKey].name}`;
+            } else {
+                productDescriptionForScript += `\n▶️ 집전화 미선택`;
+            }
+
+            productDescriptionForScript += `\n▶️ WiFi 공유기`;
+
+
+            return {
+                preDiscountWiredCost,
+                finalWiredMonthlyCost,
+                finalCostAfterCard,
+                totalActualInternetDiscount,
+                cardDiscountAmount,
+                selectedCardInfo,
+                giftCashAmount,
+                totalMobileDiscount: mobileDiscounts.total,
+                calculatedInstallationFee,
+                installationFeeSupportAmount,
+                productDescriptionForScript,
+                internetDetails: currentInternetDetails,
+                tvDetails: tvBase > 0 ? lguData.tv_plans[tvKey] : null,
+                additionalTvDetails: finalAdditionalTvCost > 0 ? lguData.additional_tv_options[additionalTvKey] : null,
+                phoneDetails: phoneBase > 0 ? lguData.phone_plans[phoneKey] : null,
+                numMobileLines,
+                discountTypeName: selectedDiscountRadioLabel,
+                discountTypeValue: selectedDiscountRadioValue,
+                isVatIncluded
+            };
+        }
+
+        function calculateAndDisplayResultsLGU() {
+            const results = calculatePlanDetails(); 
+            
+            preDiscountWiredFeeEl.textContent = formatPrice(results.preDiscountWiredCost);
+            finalWiredFeeEl.textContent = formatPrice(results.finalWiredMonthlyCost);
+            cardDiscountEl.textContent = formatPrice(results.cardDiscountAmount);
+            giftAmountEl.textContent = results.giftCashAmount.toLocaleString();
+            mobileDiscountEl.textContent = formatPrice(results.totalMobileDiscount);
+        
+            totalBaseWiredCostEl.textContent = formatPrice(results.preDiscountWiredCost);
+            totalInternetDiscountAmountEl.textContent = formatPrice(results.totalActualInternetDiscount);
+            totalCardDiscountAmountEl.textContent = formatPrice(results.cardDiscountAmount);
+            
+            finalMonthlyCostEl.textContent = formatPrice(results.finalCostAfterCard);
+            
+            selectedInternetEl.textContent = results.internetDetails.name;
+            selectedTvEl.textContent = results.tvDetails?.name || '미선택';
+            selectedAdditionalTvEl.textContent = results.additionalTvDetails?.name || '미선택';
+            selectedPhoneEl.textContent = results.phoneDetails?.name || '미선택';
+            selectedMobileCountEl.textContent = results.numMobileLines;
+            
+            selectedDiscountTypeEl.textContent = results.discountTypeName;
+            
+            installationCostResultEl.textContent = formatPrice(results.calculatedInstallationFee);
+            giftCashEl.textContent = results.giftCashAmount.toLocaleString();
+            
+            resultSection.classList.remove('hidden');
+            messageScriptSectionEl.classList.remove('hidden');
+            expertScriptSectionEl.classList.remove('hidden');
+            
+            generateMessageScriptsLGU(); 
+        }
+
+        function generateComparisonScript() {
+            const results100M = calculatePlanDetails('100M');
+            const results500M = calculatePlanDetails('500M');
+
+            if (!results100M || !results500M) {
+                alert("비교 데이터를 생성하는 데 오류가 발생했습니다.");
+                return;
+            }
+
+            const vatText = results100M.isVatIncluded ? "VAT포함" : "VAT별도";
+
+            // Use adjustForVat for calculations, formatPrice for display
+            const monthlyCost100M = adjustForVat(results100M.finalWiredMonthlyCost);
+            const monthlyCost500M = adjustForVat(results500M.finalWiredMonthlyCost);
+            const gift100M = results100M.giftCashAmount;
+            const gift500M = results500M.giftCashAmount;
+
+            const monthlyCostDifference = monthlyCost500M - monthlyCost100M;
+            const giftDifference = gift500M - gift100M;
+            
+            const discountTypeName = results100M.discountTypeName; // Should be the same for both
+
+            const comparisonScript = `[웨이팅 인터넷 통합접수센터] 100Mbps vs 500Mbps 상품 비교 안내 (${vatText})
+
+고객님께서 선택하신 옵션 기준으로, 인터넷 속도만 변경했을 때의 요금과 혜택을 비교해 드립니다.
+
+----- 100M -----
+${results100M.productDescriptionForScript.trim()}
+
+[최종 요금 및 혜택]
+▶️ 월 ${formatPrice(results100M.finalWiredMonthlyCost)}원 (${discountTypeName})
+▶️ 사은품 ${gift100M.toLocaleString()}원
+
+----- 500M -----
+${results500M.productDescriptionForScript.trim()}
+
+[최종 요금 및 혜택]
+▶️ 월 ${formatPrice(results500M.finalWiredMonthlyCost)}원 (${discountTypeName})
+▶️ 사은품 ${gift500M.toLocaleString()}원
+--------------------
+
+고객님, 혹시 알고 계셨나요?
+지금 선택하신 100Mbps 요금에 월 ${monthlyCostDifference.toLocaleString()}원만 추가하시면,
+✅ 인터넷 속도는 5배 빨라지고,
+✅ 첫 달에 받으시는 사은품은 ${(giftDifference / 10000).toLocaleString()}만원 더 커집니다!
+
+온 가족이 동시에 접속해도 끊김 없는 500Mbps 상품으로 변경 원하시면 편하게 말씀해주세요. 😊`;
+
+            infoScriptEl.value = comparisonScript.trim();
+            alert('100M vs 500M 비교 스크립트가 생성되었습니다!');
+        }
+        
+        function generateMessageScriptsLGU() {
+            const results = calculatePlanDetails();
+            const vatText = results.isVatIncluded ? "VAT포함" : "VAT별도";
+        
+            const memoAdditions = `이름
+핸드폰 번호
+핸드폰 통신사
+주민번호
+설치할 주소
+사은품 받을 계좌번호
+사은품(상/현)/ 자체지급
+상품정보
+청구 금액
+제휴카드 반영시
+설치비 안내완
+인증연락30분후 가능
+설치일정
+기존사용 인터넷 통신사`;
+
+            memoScriptEl.value = `1. 상품 : ${results.productDescriptionForScript.replace(/\n▶️ /g, ' + ').replace('[유선 상품]\n + ','')}
+2. 요금 : 할인전(${formatPrice(results.preDiscountWiredCost)}원) / 할인후(${formatPrice(results.finalWiredMonthlyCost)}원) / 카드할인후(${formatPrice(results.finalCostAfterCard)}원)
+3. 결합할인유형 : ${results.discountTypeName}
+4. 사은품 : 현금 ${results.giftCashAmount.toLocaleString()}원
+5. 설치비 : ${formatPrice(results.calculatedInstallationFee)}원
+6. 기타 : 이사 여부 [  ] / 희망설치일자 [     년  월  일]
+---
+${memoAdditions}`;
+        
+            let infoScriptText = `[웨이팅 인터넷 통합접수센터] 상품 & 사은품 요약 안내
+    안녕하세요, 웨이팅 인터넷 통합접수센터 입니다.
+    고객님께서 오늘 상담 받으신 상품 안내드립니다.
+    ${results.productDescriptionForScript}
+
+[최종 요금 및 혜택]
+    ▶️ 월 ${formatPrice(results.finalWiredMonthlyCost)}원 (총액 결합할인, ${vatText})`;
+
+            if (results.installationFeeSupportAmount > 0) {
+                infoScriptText += `\n    ▶️ 설치비 지원(자체지급) ${results.installationFeeSupportAmount.toLocaleString()}원 (확정)`;
+            }
+            infoScriptText += `\n    ▶️ 사은품 ${results.giftCashAmount.toLocaleString()}원 (확정)`;
+
+            const finalWiredMonthlyCostAdjusted = adjustForVat(results.finalWiredMonthlyCost);
+            const cardDiscountAdjusted = adjustForVat(results.cardDiscountAmount);
+            const finalCostAfterCardAdjusted = adjustForVat(results.finalCostAfterCard);
+
+            if (results.selectedCardInfo) {
+                infoScriptText += `\n    ▶️ 기존 월 ${finalWiredMonthlyCostAdjusted.toLocaleString()}원 - 카드 자동이체 청구 할인 ${cardDiscountAdjusted.toLocaleString()}원`;
+                infoScriptText += `\n    = ✨ 최종 월 납부액 ${finalCostAfterCardAdjusted.toLocaleString()}원! ✨ (⚠️${vatText})`;
+            } else {
+                infoScriptText += `\n    = ✨ 최종 월 납부액 ${finalWiredMonthlyCostAdjusted.toLocaleString()}원! ✨ (⚠️${vatText})`;
+            }
+            
+            infoScriptText += `
+
+    * 혜택은 실시간으로 바뀔 수 있다는 점 안내드립니다.
+    * 3년 약정 기준
+    웨이팅 인터넷 통합접수센터 드림. ❤️`;
+
+            infoScriptEl.value = infoScriptText;
+        
+            let finalGuidance = '';
+            if (results.discountTypeValue !== 'none') {
+                 finalGuidance = `\n\n⚠️ [필독] 월 요금 할인을 위한 마지막 단계!
+고객님, 선택하신 '${results.discountTypeName}' 할인은 인터넷 설치 완료 후, 고객님께서 직접 U+ 고객센터(101번)로 전화하시어 "결합 신청"을 하셔야 최종 적용됩니다. 잊지 말고 꼭 신청하셔서 할인 혜택을 받으시길 바랍니다!`;
+            }
+
+            let completeProductDescription = results.productDescriptionForScript.replace('[유선 상품]\n', '');
+            let completeDiscountLine = results.discountTypeName !== '결합할인 없음' ? `\n▶️ 결합할인유형 : ${results.discountTypeName}` : '';
+        
+            completeScriptEl.value = `[웨이팅 인터넷 통합접수센터] U+ 가입 완료 안내\n안녕하세요, 고객님. 웨이팅 인터넷 통합접수센터 U+입니다.\n✅ 계약이 완료되었어요, 아래 내용은 계약서와 동일한 효력이 있으니 꼼꼼히 읽어주세요.\n⚠️ 3년 약정이며, 아래와 같은 상황에 해당하면 받으셨던 사은품은 환수 됩니다.\n① 1년 이내 해지/정지/명의변경\n② 요금 미납 및 사용정지\n③ 요금제 하향 (상향 시에는 환수 되지 않습니다!)\n④ 개통 1개월 이내 결제수단 지로청구서로 변경\n⚠️ 신규 가입 후 기존에 사용하시던 타사 인터넷/TV는 꼭 직접 해지 해주세요. 자동해지되지 않으며 이럴 경우 요금이 이중 부과되어요.\n⚠️ 3년 이내 해지 시 통신사 본사에 위약금 (할인 반환금) 및 면제된 설치비/장비임대료 등이 반환될 수 있어요.\n✅ 가입 상품 안내\n${completeProductDescription}${completeDiscountLine}\n▶️ 월 ${formatPrice(results.finalWiredMonthlyCost)}원 (유선상품, 3년 약정, ${vatText})\n▶️ 설치비 ${formatPrice(results.calculatedInstallationFee)}원 첫 달 합산 청구\n▶️ 현금 사은품 ${results.giftCashAmount.toLocaleString()}원\n✅사은품은 설치 후 평일 기준 익주 금요일까지 지급됩니다. (설치 후 연락 필수)\n${finalGuidance}\n웨이팅 인터넷 통합접수센터 드림.`;
+        
+            sensitiveInfoLinkScriptEl.value = `[LG] 아래 링크에 고객님의 민감정보를 입력하시면 LG로 고객님의 민감정보가 직접 전송후 접수 됩니다.\n\nhttps://lg-sensitiveinfo.com/\n\n입력후 접수 완료 라고 문자 주시면 담당 상담원이 접수 확인후 필수 안내사항 안내 드리겠습니다.`;
+        
+            mvnoInfoScriptEl.value = 'U+알뜰모바일 인터넷 결합 요금제 정보: https://www.uplusmvno.com/plan/plan-list';
+        }
+
+        function generateTCOComparisonScript(speed) {
+            const data = tcoData[speed]?.lgu;
+            if (!data) {
+                tcoScriptEl.value = `${speed} 속도에 대한 TCO 데이터가 없습니다.`;
+                return;
+            }
+
+            const savings13 = data.oneYearTCO13 - data.threeYearTCO13;
+            const savings18 = data.oneYearTCO18 - data.threeYearTCO18;
+
+            tcoScriptEl.value = `1년 vs 3년 약정 총비용(TCO) 비교 (${speed})
+
+"고객님, 약정 기간이 부담되시는 마음 충분히 이해합니다.
+그래서 공식 약관 기준으로 실제 총비용을 비교한 자료를 보내드렸습니다.
+놀랍게도, 3년 약정은 1년(13개월)만 사용하고 해지해도 1년 약정보다 훨씬 저렴합니다."
+
+■ ${speed} 상품, 1년만 써도 3년 약정이 이득!
+- 13개월 사용 후 해지 시: 1년 약정보다 총 ${savings13.toLocaleString()}원 이득!
+- 18개월 사용 후 해지 시: 1년 약정보다 총 ${savings18.toLocaleString()}원 이득!
+
+아래는 위약금까지 모두 포함된 실제 총 부담 금액(TCO)입니다.
+
+| 구분        | 월 요금(VAT 포함) | 사은품   | 13개월 사용 시 총비용(TCO) | 18개월 사용 시 총비용(TCO) |
+|--------------|-------------------|----------|----------------------------|----------------------------|
+| 1년 약정     | ${data.oneYearFee.toLocaleString()}원        | -        | **${data.oneYearTCO13.toLocaleString()}원** | **${data.oneYearTCO18.toLocaleString()}원** |
+| 3년 약정     | ${data.threeYearFee.toLocaleString()}원        | ${data.threeYearGift.toLocaleString()}원 | **${data.threeYearTCO13.toLocaleString()}원** (👉${(savings13/10000).toFixed(1)}만원 이득) | **${data.threeYearTCO18.toLocaleString()}원** (👉${(savings18/10000).toFixed(1)}만원 이득) |
+
+*TCO(Total Cost of Ownership): 월 요금, 사은품, 해지 위약금 등 모든 비용을 종합하여 고객이 실제로 부담하는 총 소유 비용.
+
+[출처 안내]
+* LGU+: lguplus.com > 인터넷/IPTV > 할인반환금안내 (https://www.lguplus.com/internet-iptv/popup/PaybackPop)`;
+        }
+
+        function generatePenaltyAnalysisScript() {
+            penaltyScriptEl.value = penaltyAnalysisData.text;
+        }
+
+        function generateWaiverScript() {
+            waiverScriptEl.value = waiverConditionsData.text;
+        }
+
+        function getInstallationServiceString(hasInternet, hasFirstTv, hasPhone, hasAdditionalTv) {
+            if (!hasInternet) return null;
+            if (hasFirstTv && hasAdditionalTv) return "인터넷 + TV + TV추가";
+            if (hasFirstTv && hasPhone) return "인터넷 + TV + 일반/070전화"; 
+            if (hasFirstTv) return "인터넷 + TV";
+            if (hasPhone) return "인터넷 + 인터넷전화"; 
+            return "인터넷";
+        }
+        
+        function copyToClipboard(elementId, feedbackElementId) {
+            const textarea = document.getElementById(elementId);
+            const feedbackEl = document.getElementById(feedbackElementId);
+            
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    feedbackEl.textContent = '복사되었습니다!';
+                    setTimeout(() => { feedbackEl.textContent = ''; }, 2000);
+                } else {
+                    feedbackEl.textContent = '복사 실패';
+                     setTimeout(() => { feedbackEl.textContent = ''; }, 2000);
+                }
+            } catch (err)
+ {
+                feedbackEl.textContent = '복사 오류';
+                setTimeout(() => { feedbackEl.textContent = ''; }, 2000);
+            }
+
+            window.getSelection().removeAllRanges();
+        }
+        
+        function manageInternetAndDiscountCompatibility() {
+            const internetKey = internetPlanEl.value;
+            const selectedDiscount = document.querySelector('input[name="discountType"]:checked').value;
+            const togetherBundleRadio = document.querySelector('input[name="discountType"][value="together_bundle"]');
+            const togetherBundleLabel = togetherBundleRadio.closest('label.radio-label'); 
+            const option100M = internetPlanEl.querySelector('option[value="100M"]');
+
+            if (internetKey === '100M') {
+                togetherBundleRadio.disabled = true;
+                if (togetherBundleLabel) togetherBundleLabel.classList.add('opacity-50', 'cursor-not-allowed');
+
+                if (selectedDiscount === 'together_bundle') {
+                    document.querySelector('input[name="discountType"][value="none"]').checked = true;
+                    document.querySelector('input[name="discountType"][value="none"]').dispatchEvent(new Event('change'));
+                }
+            } else {
+                togetherBundleRadio.disabled = false;
+                if (togetherBundleLabel) togetherBundleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            if (option100M) {
+                const currentSelectedDiscount = document.querySelector('input[name="discountType"]:checked').value;
+                option100M.disabled = currentSelectedDiscount === 'together_bundle';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCalculator);
+    </script>
+</body>
+</html>
+

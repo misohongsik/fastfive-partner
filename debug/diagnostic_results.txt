@@ -1,0 +1,7 @@
+Diagnostic Results:
+Total Products: 9599
+videos_json IS NULL: 32
+videos_json = '': 0
+videos_json = '[]': 0
+videos_json = 'null': 0
+Queue items with missing/empty video in Products: 32

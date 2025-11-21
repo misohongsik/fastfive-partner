@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const { isSafeProduct } = require('./Product_Filter');
+const { isSafeProduct } = require('../utils/Product_Filter');
 
 const DB_CONFIG = {
     host: 'localhost',

@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const mysql = require('mysql2/promise');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require('dotenv').config();
-const { getNaverCategoryId } = require('./category_map');
+const { getNaverCategoryId } = require('../utils/category_map');
 
 // --- DB 설정 ---
 const DB_CONFIG = {

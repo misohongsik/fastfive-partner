@@ -1,0 +1,20 @@
+Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+asin	varchar(20)	NO	UNI	NULL	
+source_category_id	int	YES	MUL	NULL	
+last_rank_in_bsr	int	YES		NULL	
+title	text	NO		NULL	
+brand	varchar(255)	YES		NULL	
+price_usd	decimal(10,2)	YES		NULL	
+shipping_usd	decimal(10,2)	YES		NULL	
+is_direct_shipping	tinyint(1)	YES		NULL	
+availability	varchar(100)	YES		NULL	
+bullet_points	json	YES		NULL	
+main_image_url	text	YES		NULL	
+all_image_urls	json	YES		NULL	
+rating	varchar(100)	YES		NULL	
+review_count	varchar(100)	YES		NULL	
+created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+videos_json	json	YES		NULL	
+reviews_json	json	YES		NULL	

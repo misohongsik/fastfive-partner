@@ -1,0 +1,177 @@
+.academy-page {
+    background: #FFF9E6;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.academy-header {
+    background: #FF9800;
+    color: white;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.academy-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.academy-header h1 {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.academy-header nav {
+    display: flex;
+    gap: 30px;
+}
+
+.academy-header nav a {
+    color: white;
+    font-weight: 600;
+}
+
+.academy-hero {
+    background: linear-gradient(135deg, #FF9800 0%, #FFC107 100%);
+    color: white;
+    padding: 100px 24px;
+    text-align: center;
+}
+
+.hero-content h2 {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+.hero-content p {
+    font-size: 20px;
+    margin-bottom: 40px;
+}
+
+.hero-content button {
+    background: white;
+    color: #FF9800;
+    padding: 16px 40px;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 30px;
+}
+
+.academy-curriculum {
+    padding: 80px 0;
+}
+
+.academy-curriculum h2 {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 50px;
+    color: #FF9800;
+}
+
+.curriculum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.curriculum-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.curriculum-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 30px rgba(255, 152, 0, 0.2);
+}
+
+.emoji {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.curriculum-card h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.curriculum-card p {
+    color: #666;
+    font-size: 15px;
+}
+
+.academy-teachers {
+    padding: 80px 0;
+    background: white;
+}
+
+.academy-teachers h2 {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 900;
+    margin-bottom: 40px;
+    color: #FF9800;
+}
+
+.teacher-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.teacher {
+    background: #FFF9E6;
+    padding: 20px 30px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    border-left: 4px solid #FF9800;
+}
+
+.academy-cta {
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    color: white;
+    padding: 80px 24px;
+    text-align: center;
+}
+
+.academy-cta h2 {
+    font-size: 40px;
+    font-weight: 900;
+    margin-bottom: 30px;
+}
+
+.academy-cta button {
+    background: white;
+    color: #4CAF50;
+    padding: 18px 50px;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 30px;
+}
+
+.academy-footer {
+    background: #FF9800;
+    color: white;
+    text-align: center;
+    padding: 30px 0;
+}
